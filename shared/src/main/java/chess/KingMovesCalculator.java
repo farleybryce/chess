@@ -6,7 +6,7 @@ import java.util.List;
 
 public class KingMovesCalculator {
     // calculate possible moves for king piece
-    public static Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
+    public static Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition, ChessPiece piece) {
         // list of all the legal moves the King can make
         ArrayList<ChessMove> legalMoves = new ArrayList<>();
         // get row and column coordinates of king
@@ -19,7 +19,8 @@ public class KingMovesCalculator {
                     continue;
                 }
                 ChessPosition targetPosition = new ChessPosition(i,j);
-                if (board.getPiece(targetPosition) == null) {
+                ChessPiece targetPiece = board.getPiece(targetPosition);
+                if ((targetPiece == null) || (targetPiece.getTeamColor() != piece.getTeamColor())) {
                     legalMoves.add(new ChessMove(myPosition, targetPosition, null));
                 }
             }

@@ -9,7 +9,7 @@ public class PieceMovesCalculator {
         // determine piece type
         switch (piece.getPieceType()) {
             case KING:
-                return KingMovesCalculator.pieceMoves(board, myPosition);
+                return KingMovesCalculator.pieceMoves(board, myPosition, piece);
             case QUEEN:
                 break;
             case BISHOP:
