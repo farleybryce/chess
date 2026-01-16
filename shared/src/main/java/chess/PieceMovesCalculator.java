@@ -4,9 +4,24 @@ import java.util.Collection;
 import java.util.List;
 
 public class PieceMovesCalculator {
-    // get
-    public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        return List.of();
+    // get a list of possible moves
+    public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition, ChessPiece piece) {
+        // determine piece type
+        switch (piece.getPieceType()) {
+            case KING:
+                break;
+            case QUEEN:
+                break;
+            case BISHOP:
+                break;
+            case KNIGHT:
+                break;
+            case ROOK:
+                break;
+            case PAWN:
+                break;
+        }
+//        return List.of();
     }
 
 }
