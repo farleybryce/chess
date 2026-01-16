@@ -15,11 +15,16 @@ public class KingMovesCalculator {
 
         for (int i = myRow-1; i < myRow+2; i++) {
             for (int j = myCol-1; j < myCol+2; j++) {
+                // check if target move is inbounds
+                if (i < 1 || 8 < i) { continue; }
+                if (j < 1 || 8 < j) { continue; }
+                // don't move to current spot
                 if ((i == myRow) && (j == myCol)) {
                     continue;
                 }
                 ChessPosition targetPosition = new ChessPosition(i,j);
                 ChessPiece targetPiece = board.getPiece(targetPosition);
+                // check if target space is occupied by piece of the same color
                 if ((targetPiece == null) || (targetPiece.getTeamColor() != piece.getTeamColor())) {
                     legalMoves.add(new ChessMove(myPosition, targetPosition, null));
                 }
