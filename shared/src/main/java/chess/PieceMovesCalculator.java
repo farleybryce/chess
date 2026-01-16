@@ -5,11 +5,11 @@ import java.util.List;
 
 public class PieceMovesCalculator {
     // get a list of possible moves
-    public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition, ChessPiece piece) {
+    public static Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition, ChessPiece piece) {
         // determine piece type
         switch (piece.getPieceType()) {
             case KING:
-                break;
+                return KingMovesCalculator.pieceMoves(board, myPosition);
             case QUEEN:
                 break;
             case BISHOP:
@@ -21,7 +21,7 @@ public class PieceMovesCalculator {
             case PAWN:
                 break;
         }
-//        return List.of();
+        return List.of();
     }
 
 }
