@@ -15,6 +15,7 @@ public class KnightMovesCalculator {
 
 
         for (int i = myRow-2; i < myRow+3; i++) {
+            // determine the column offset/displacement based on the row offset from current position
             int rowDisplacement = Math.abs(i - myRow);
             int colDisplacement;
             if (rowDisplacement == 2) {
@@ -27,9 +28,8 @@ public class KnightMovesCalculator {
             // check if target move is inbounds
             if (i < 1 || 8 < i) { continue; }
             // don't move to current spot
-            if (colDisplacement == 0) {
-                continue;
-            }
+            if (colDisplacement == 0) { continue; }
+            // iterate over the two possible column coordinates in target row
             for (int j = -1; j < 2; j+=2) {
                 // find column coordinates
                 int colCoordinate = myCol + (j * colDisplacement);
