@@ -32,7 +32,7 @@ public class KnightMovesCalculator {
             }
             for (int j = -1; j < 2; j+=2) {
                 // find column coordinates
-                int colCoordinate = 5 + (j * colDisplacement);
+                int colCoordinate = myCol + (j * colDisplacement);
                 // check if target move is inbounds
                 if (colCoordinate < 1 || 8 < colCoordinate) { continue; }
                 ChessPosition targetPosition = new ChessPosition(i,colCoordinate);
