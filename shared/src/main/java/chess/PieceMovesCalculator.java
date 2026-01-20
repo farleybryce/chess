@@ -13,7 +13,7 @@ public class PieceMovesCalculator {
             case QUEEN:
                 break;
             case BISHOP:
-                break;
+                return BishopMovesCalculator.pieceMoves(board, myPosition, piece);
             case KNIGHT:
                 return KnightMovesCalculator.pieceMoves(board, myPosition, piece);
             case ROOK:
