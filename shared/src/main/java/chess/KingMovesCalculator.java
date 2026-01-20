@@ -22,12 +22,7 @@ public class KingMovesCalculator {
                 if ((i == myRow) && (j == myCol)) {
                     continue;
                 }
-                ChessPosition targetPosition = new ChessPosition(i,j);
-                ChessPiece targetPiece = board.getPiece(targetPosition);
-                // check if target space is occupied by piece of the same color
-                if ((targetPiece == null) || (targetPiece.getTeamColor() != piece.getTeamColor())) {
-                    legalMoves.add(new ChessMove(myPosition, targetPosition, null));
-                }
+                SquareValid.squareValid(i, j, legalMoves, board, piece, myPosition);
             }
         }
 

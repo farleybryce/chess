@@ -35,13 +35,7 @@ public class KnightMovesCalculator {
                 int colCoordinate = myCol + (j * colDisplacement);
                 // check if target move is inbounds
                 if (colCoordinate < 1 || 8 < colCoordinate) { continue; }
-                ChessPosition targetPosition = new ChessPosition(i,colCoordinate);
-                ChessPiece targetPiece = board.getPiece(targetPosition);
-                // check if target space is occupied by piece of the same color
-                if ((targetPiece == null) || (targetPiece.getTeamColor() != piece.getTeamColor())) {
-                    legalMoves.add(new ChessMove(myPosition, targetPosition, null));
-                }
-
+                SquareValid.squareValid(i, colCoordinate, legalMoves, board, piece, myPosition);
             }
 
         }
