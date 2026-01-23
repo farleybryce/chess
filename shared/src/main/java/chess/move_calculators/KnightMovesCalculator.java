@@ -1,8 +1,12 @@
-package chess;
+package chess.move_calculators;
+
+import chess.ChessBoard;
+import chess.ChessMove;
+import chess.ChessPiece;
+import chess.ChessPosition;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 public class KnightMovesCalculator {
     // calculate possible moves for king piece
@@ -35,7 +39,7 @@ public class KnightMovesCalculator {
                 int colCoordinate = myCol + (j * colDisplacement);
                 // check if target move is inbounds
                 if (colCoordinate < 1 || 8 < colCoordinate) { continue; }
-                SquareValid.squareValid(i, colCoordinate, legalMoves, board, piece, myPosition);
+                SquareValid.squareValid(i, colCoordinate, legalMoves, board, myPosition, piece);
             }
 
         }

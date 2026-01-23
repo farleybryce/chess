@@ -1,8 +1,12 @@
-package chess;
+package chess.move_calculators;
+
+import chess.ChessBoard;
+import chess.ChessMove;
+import chess.ChessPiece;
+import chess.ChessPosition;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 public class KingMovesCalculator {
     // calculate possible moves for king piece
@@ -22,7 +26,7 @@ public class KingMovesCalculator {
                 if ((i == myRow) && (j == myCol)) {
                     continue;
                 }
-                SquareValid.squareValid(i, j, legalMoves, board, piece, myPosition);
+                SquareValid.squareValid(i, j, legalMoves, board,myPosition, piece);
             }
         }
 
