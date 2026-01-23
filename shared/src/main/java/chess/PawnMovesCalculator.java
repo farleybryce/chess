@@ -42,7 +42,7 @@ public class PawnMovesCalculator {
             }
         }
         if (myCol != 8) {
-            ChessPosition targetCapturePositionRight = new ChessPosition(myRow + movDir, myCol - 1);
+            ChessPosition targetCapturePositionRight = new ChessPosition(myRow + movDir, myCol + 1);
             ChessPiece targetCapturePieceRight = board.getPiece(targetCapturePositionRight);
             if ((targetCapturePieceRight != null) && (targetCapturePieceRight.getTeamColor() != piece.getTeamColor())) {
                 legalTargets.add(targetCapturePositionRight);
