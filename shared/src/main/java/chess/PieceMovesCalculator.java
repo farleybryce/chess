@@ -19,7 +19,7 @@ public class PieceMovesCalculator {
             case ROOK:
                 return RookMovesCalculator.pieceMoves(board, myPosition, piece);
             case PAWN:
-                break;
+                return PawnMovesCalculator.pieceMoves(board, myPosition, piece);
         }
         return List.of();
     }
