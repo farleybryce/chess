@@ -61,6 +61,7 @@ public class HypotheticalGame {
         return oppTargetPositions.contains(kingPosition);
     }
 
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) {
