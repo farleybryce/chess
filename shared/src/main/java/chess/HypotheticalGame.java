@@ -26,7 +26,7 @@ public class HypotheticalGame {
         return this.board;
     }
 
-    public void movePiece(ChessMove move) {
+    public static void movePiece(ChessMove move, ChessBoard board) {
         ChessPiece piece = board.getPiece(move.getStartPosition());
         board.addPiece(move.getStartPosition(), null);
         if (move.getPromotionPiece() != null) {

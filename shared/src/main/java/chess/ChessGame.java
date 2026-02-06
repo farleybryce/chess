@@ -55,7 +55,7 @@ public class ChessGame {
         for (ChessMove move : possibleMoves) {
             HypotheticalGame possibleBoard = new HypotheticalGame();
             possibleBoard.deepCopyBoard(currentBoard);
-            possibleBoard.movePiece(move);
+            possibleBoard.movePiece(move, possibleBoard.getBoard());
             if (!possibleBoard.isInCheck(piece.getTeamColor())) {
                 validMovesSet.add(move);
             }
@@ -70,7 +70,21 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
-        throw new RuntimeException("Not implemented");
+        ChessPiece piece = currentBoard.getPiece(move.getStartPosition());
+        if ((piece == null) || (piece.getTeamColor() != currentTeamColor)) {
+            throw new InvalidMoveException();
+        }
+        Collection<ChessMove> validMovesCollection = validMoves(move.getStartPosition());
+        if (validMovesCollection.contains(move)) {
+            HypotheticalGame.movePiece(move, currentBoard);
+            if (currentTeamColor == TeamColor.WHITE) {
+                currentTeamColor = TeamColor.BLACK;
+            } else {
+                currentTeamColor = TeamColor.WHITE;
+            }
+        } else {
+            throw new InvalidMoveException();
+        }
     }
 
     /**
