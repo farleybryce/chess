@@ -1,6 +1,6 @@
 package chess;
 
-import java.util.Collection;
+import java.util.*;
 
 /**
  * For a class that can manage a chess game, making moves on a board
@@ -68,7 +68,28 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        throw new RuntimeException("Not implemented");
+        HashSet<ChessMove> oppMoves = new HashSet<>();
+        ChessPosition kingPosition = new ChessPosition(1,1);
+        // iterate over all spaces to find the king and the other team's pieces
+        for (int i=1; i<9; i++) {
+            for (int j=1; j<9; j++) {
+                ChessPosition position = new ChessPosition(i,j);
+                ChessPiece piece = currentBoard.getPiece(position);
+                if (piece != null) {
+                    if (piece.getTeamColor() != teamColor) {
+                        // add the moves of the current piece to a master list
+                        oppMoves.addAll(piece.pieceMoves(currentBoard, position));
+                    } else if (piece.getPieceType() == ChessPiece.PieceType.KING) {
+                        kingPosition = position;
+                    }
+                }
+            }
+        }
+        HashSet<ChessPosition> oppTargetPositions = new HashSet<>();
+        for (ChessMove move : oppMoves) {
+            oppTargetPositions.add(move.getEndPosition());
+        }
+        return oppTargetPositions.contains(kingPosition);
     }
 
     /**
@@ -108,5 +129,19 @@ public class ChessGame {
      */
     public ChessBoard getBoard() {
         return this.currentBoard;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ChessGame chessGame = (ChessGame) o;
+        return currentTeamColor == chessGame.currentTeamColor && Objects.equals(currentBoard, chessGame.currentBoard);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(currentTeamColor, currentBoard);
     }
 }
