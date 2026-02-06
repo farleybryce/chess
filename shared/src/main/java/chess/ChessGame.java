@@ -14,6 +14,7 @@ public class ChessGame {
     public ChessGame() {
         this.currentTeamColor = TeamColor.WHITE;
         this.currentBoard = new ChessBoard();
+        currentBoard.resetBoard();
     }
 
     /**
@@ -48,7 +49,18 @@ public class ChessGame {
      * startPosition
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-        throw new RuntimeException("Not implemented");
+        ChessPiece piece = currentBoard.getPiece(startPosition);
+        HashSet<ChessMove> possibleMoves = new HashSet<>(piece.pieceMoves(currentBoard, startPosition));
+        HashSet<ChessMove> validMovesSet = new HashSet<>();
+        for (ChessMove move : possibleMoves) {
+            HypotheticalGame possibleBoard = new HypotheticalGame();
+            possibleBoard.deepCopyBoard(currentBoard);
+            possibleBoard.movePiece(move);
+            if (!possibleBoard.isInCheck(piece.getTeamColor())) {
+                validMovesSet.add(move);
+            }
+        }
+        return validMovesSet;
     }
 
     /**
@@ -68,28 +80,9 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        HashSet<ChessMove> oppMoves = new HashSet<>();
-        ChessPosition kingPosition = new ChessPosition(1,1);
-        // iterate over all spaces to find the king and the other team's pieces
-        for (int i=1; i<9; i++) {
-            for (int j=1; j<9; j++) {
-                ChessPosition position = new ChessPosition(i,j);
-                ChessPiece piece = currentBoard.getPiece(position);
-                if (piece != null) {
-                    if (piece.getTeamColor() != teamColor) {
-                        // add the moves of the current piece to a master list
-                        oppMoves.addAll(piece.pieceMoves(currentBoard, position));
-                    } else if (piece.getPieceType() == ChessPiece.PieceType.KING) {
-                        kingPosition = position;
-                    }
-                }
-            }
-        }
-        HashSet<ChessPosition> oppTargetPositions = new HashSet<>();
-        for (ChessMove move : oppMoves) {
-            oppTargetPositions.add(move.getEndPosition());
-        }
-        return oppTargetPositions.contains(kingPosition);
+        HypotheticalGame testGame = new HypotheticalGame();
+        testGame.deepCopyBoard(currentBoard);
+        return testGame.isInCheck(teamColor);
     }
 
     /**
