@@ -99,7 +99,7 @@ public class ChessGame {
         return testGame.isInCheck(teamColor);
     }
 
-    private boolean validMoveExists(TeamColor teamColor) {
+    private boolean validMoveDoesNotExist(TeamColor teamColor) {
         HashSet<ChessMove> validMovesSet = new HashSet<>();
         for (int i=1; i<9; i++) {
             for (int j=1; j<9; j++) {
@@ -109,11 +109,11 @@ public class ChessGame {
                     validMovesSet.addAll(validMoves(position));
                 }
                 if (!validMovesSet.isEmpty()) {
-                    return true;
+                    return false;
                 }
             }
         }
-        return false;
+        return true;
     }
 
     /**
@@ -124,7 +124,7 @@ public class ChessGame {
      */
     public boolean isInCheckmate(TeamColor teamColor) {
         if (this.isInCheck(teamColor)) {
-            return !validMoveExists(teamColor);
+            return validMoveDoesNotExist(teamColor);
         }
         return false;
     }
@@ -138,7 +138,7 @@ public class ChessGame {
      */
     public boolean isInStalemate(TeamColor teamColor) {
         if (!this.isInCheck(teamColor)) {
-            return !validMoveExists(teamColor);
+            return validMoveDoesNotExist(teamColor);
         }
         return false;
     }
