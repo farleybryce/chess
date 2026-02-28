@@ -5,8 +5,11 @@ import dataaccess.DataAccessException;
 import dataaccess.UserDAO;
 import model.AuthData;
 import model.UserData;
+import server.LoginRequest;
 import server.RegisterLoginResult;
 import server.RegisterRequest;
+
+import java.util.Objects;
 
 public class UserService {
 
@@ -28,7 +31,21 @@ public class UserService {
             AuthData authData = authDAO.createAuth(userData.username());
             return new RegisterLoginResult(userData.username(), authData.authToken());
         }
+    }
 
+    public RegisterLoginResult login(LoginRequest loginRequest) throws DataAccessException {
+        UserData userData = userDAO.getUser(loginRequest.username());
+        if (userData == null) {
+            throw new DataAccessException(400, "Error: bad request");
+        }
+        if (!Objects.equals(userData.password(), loginRequest.password())) {
+            throw new DataAccessException(401, "Error: unauthorized");
+        }
+        AuthData authData = authDAO.createAuth(userData.username());
+        return new RegisterLoginResult(userData.username(), authData.authToken());
+    }
+
+    public void logout(String authToken) {
 
     }
 }
