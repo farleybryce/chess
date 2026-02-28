@@ -3,6 +3,8 @@ package dataaccess;
 import chess.ChessGame;
 import model.GameData;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Objects;
 
@@ -13,7 +15,7 @@ public class MemoryGameDAO implements GameDAO {
 
     public int createGame(String gameName) {
         int gameID = ++nextID;
-        gameDataHashMap.put(gameID, new GameData(gameID, "","", gameName, new ChessGame()));
+        gameDataHashMap.put(gameID, new GameData(gameID, null,null, gameName, new ChessGame()));
         return gameID;
     }
 
@@ -28,17 +30,21 @@ public class MemoryGameDAO implements GameDAO {
         GameData gameData = gameDataHashMap.get(gameID);
         GameData updatedGameData;
         if (playerColor == ChessGame.TeamColor.WHITE) {
-            if (!Objects.equals(gameData.whiteUsername(), "")) {
+            if (!Objects.equals(gameData.whiteUsername(), null)) {
                 throw new DataAccessException(403, "Error: already taken");
             }
             updatedGameData = new GameData(gameID, username, gameData.blackUsername(), gameData.gameName(), gameData.game());
         } else {
-            if (!Objects.equals(gameData.blackUsername(), "")) {
+            if (!Objects.equals(gameData.blackUsername(), null)) {
                 throw new DataAccessException(403, "Error: already taken");
             }
             updatedGameData = new GameData(gameID, gameData.whiteUsername(), username, gameData.gameName(), gameData.game());
 
         }
         gameDataHashMap.put(gameID, updatedGameData);
+    }
+
+    public ArrayList<GameData> listGames() {
+        return new ArrayList<GameData>(gameDataHashMap.values());
     }
 }
