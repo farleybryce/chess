@@ -17,4 +17,8 @@ public class MemoryUserDAO implements UserDAO {
     public void createUser(UserData userData) {
         userDataHashMap.put(userData.username(), userData);
     }
+
+    public void clear() {
+        userDataHashMap.clear();
+    }
 }

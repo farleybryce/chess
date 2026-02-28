@@ -14,7 +14,7 @@ import java.util.Map;
 public class Server {
     private final UserService userService;
     private final GameService gameService;
-//    private final ClearService clearService;
+    private final ClearService clearService;
     private final Javalin javalin;
 
     public Server() {
@@ -24,6 +24,7 @@ public class Server {
 
         this.userService = new UserService(memoryUserDAO, memoryAuthDAO);
         this.gameService = new GameService(memoryGameDAO, memoryAuthDAO);
+        this.clearService = new ClearService(memoryUserDAO, memoryGameDAO, memoryAuthDAO);
 
         javalin = Javalin.create(config -> config.staticFiles.add("web"))
         // Register your endpoints and exception handlers here.
@@ -33,6 +34,7 @@ public class Server {
         .post("/game", this::createGame)
         .put("/game", this::joinGame)
         .get("/game", this::listGames)
+        .delete("/db", this::clear)
         .exception(DataAccessException.class, this::exceptionHandler);
     }
 
@@ -83,5 +85,10 @@ public class Server {
     public void listGames(Context ctx) throws DataAccessException {
         ListResult listResult = gameService.listGames(ctx.header("authorization"));
         ctx.result(new Gson().toJson(listResult));
+    }
+
+    public void clear(Context ctx) throws DataAccessException {
+        clearService.clear();
+        ctx.result("{}");
     }
 }
