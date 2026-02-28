@@ -1,13 +1,11 @@
 package server;
 
 import com.google.gson.Gson;
-import dataaccess.DataAccessException;
-import dataaccess.MemoryAuthDAO;
-import dataaccess.MemoryUserDAO;
-import dataaccess.UserDAO;
+import dataaccess.*;
 import io.javalin.*;
 import io.javalin.http.Context;
 import service.ClearService;
+import service.GameService;
 import service.UserService;
 
 import java.util.Map;
@@ -15,22 +13,24 @@ import java.util.Map;
 
 public class Server {
     private final UserService userService;
-//    private final GameService gameService;
+    private final GameService gameService;
 //    private final ClearService clearService;
     private final Javalin javalin;
 
     public Server() {
-        this(new UserService(new MemoryUserDAO(), new MemoryAuthDAO()));
-    }
+        MemoryUserDAO memoryUserDAO = new MemoryUserDAO();
+        MemoryAuthDAO memoryAuthDAO = new MemoryAuthDAO();
+        MemoryGameDAO memoryGameDAO = new MemoryGameDAO();
 
-    public Server(UserService userService) {
-        this.userService = userService;
+        this.userService = new UserService(memoryUserDAO, memoryAuthDAO);
+        this.gameService = new GameService(memoryGameDAO, memoryAuthDAO);
 
         javalin = Javalin.create(config -> config.staticFiles.add("web"))
         // Register your endpoints and exception handlers here.
         .post("/user", this::register)
         .post("/session", this::login)
         .delete("/session", this::logout)
+        .post("/game", this::createGame)
         .exception(DataAccessException.class, this::exceptionHandler);
     }
 
@@ -64,5 +64,11 @@ public class Server {
     public void logout(Context ctx) throws DataAccessException {
         userService.logout(ctx.header("authorization"));
         ctx.result("{}");
+    }
+
+    public void createGame(Context ctx) throws DataAccessException {
+        CreateRequest createRequest = new Gson().fromJson(ctx.body(), CreateRequest.class);
+        CreateResult createResult = gameService.createGame(ctx.header("authorization"), createRequest);
+        ctx.result(new Gson().toJson(createResult));
     }
 }
