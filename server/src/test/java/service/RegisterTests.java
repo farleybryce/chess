@@ -19,6 +19,7 @@ public class RegisterTests {
         RegisterLoginResult registerResult = userService.register(registerRequest);
         assertNotNull(registerResult);
         assertEquals(registerRequest.username(), registerResult.username());
+        assertNotNull(registerResult.authToken());
     }
 
     @Test
