@@ -35,7 +35,7 @@ public class UserTests {
     public void successfulLoginTest() throws DataAccessException {
         RegisterRequest registerRequest = new RegisterRequest("bryce", "password", "bryce@example.com");
         UserService userService = new UserService(new MemoryUserDAO(), new MemoryAuthDAO());
-        RegisterLoginResult registerResult = userService.register(registerRequest);
+        userService.register(registerRequest);
         LoginRequest loginRequest = new LoginRequest("bryce", "password");
         RegisterLoginResult loginResult = userService.login(loginRequest);
         assertNotNull(loginResult);
@@ -47,10 +47,33 @@ public class UserTests {
     public void failedLoginTest() throws DataAccessException {
         RegisterRequest registerRequest = new RegisterRequest("bryce", "password", "bryce@example.com");
         UserService userService = new UserService(new MemoryUserDAO(), new MemoryAuthDAO());
-        RegisterLoginResult registerResult = userService.register(registerRequest);
+        userService.register(registerRequest);
         LoginRequest loginRequest = new LoginRequest("bryce", "notPassword");
         assertThrows(DataAccessException.class, () -> {
             userService.login(loginRequest);
+        });
+    }
+
+    @Test
+    public void successfulLogout() throws DataAccessException {
+        RegisterRequest registerRequest = new RegisterRequest("bryce", "password", "bryce@example.com");
+        MemoryAuthDAO memoryAuthDAO = new MemoryAuthDAO();
+        UserService userService = new UserService(new MemoryUserDAO(), memoryAuthDAO);
+        RegisterLoginResult registerResult = userService.register(registerRequest);
+        userService.logout(registerResult.authToken());
+        assertThrows(DataAccessException.class, () -> {
+            memoryAuthDAO.getAuth(registerResult.authToken());
+        });
+    }
+
+    @Test
+    public void failedLogout() throws DataAccessException {
+        RegisterRequest registerRequest = new RegisterRequest("bryce", "password", "bryce@example.com");
+        MemoryAuthDAO memoryAuthDAO = new MemoryAuthDAO();
+        UserService userService = new UserService(new MemoryUserDAO(), memoryAuthDAO);
+        userService.register(registerRequest);
+        assertThrows(DataAccessException.class, () -> {
+            userService.logout("thisIsAFakeAuthToken");
         });
     }
 }

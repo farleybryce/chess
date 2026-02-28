@@ -63,5 +63,6 @@ public class Server {
 
     public void logout(Context ctx) throws DataAccessException {
         userService.logout(ctx.header("authorization"));
+        ctx.result("{}");
     }
 }
