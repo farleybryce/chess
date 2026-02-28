@@ -31,6 +31,7 @@ public class Server {
         .post("/session", this::login)
         .delete("/session", this::logout)
         .post("/game", this::createGame)
+        .put("/game", this::joinGame)
         .exception(DataAccessException.class, this::exceptionHandler);
     }
 
@@ -70,5 +71,11 @@ public class Server {
         CreateRequest createRequest = new Gson().fromJson(ctx.body(), CreateRequest.class);
         CreateResult createResult = gameService.createGame(ctx.header("authorization"), createRequest);
         ctx.result(new Gson().toJson(createResult));
+    }
+
+    public void joinGame(Context ctx) throws DataAccessException {
+        JoinRequest joinRequest = new Gson().fromJson(ctx.body(), JoinRequest.class);
+        gameService.joinGame(ctx.header("authorization"), joinRequest);
+        ctx.result("{}");
     }
 }
