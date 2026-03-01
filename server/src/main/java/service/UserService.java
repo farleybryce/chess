@@ -22,6 +22,9 @@ public class UserService {
     }
 
     public RegisterLoginResult register(RegisterRequest registerRequest) throws DataAccessException {
+        if (registerRequest.username() == null || registerRequest.password() == null || registerRequest.email() == null) {
+            throw new DataAccessException(400, "Error: bad request");
+        }
         UserData checkUser = userDAO.getUser(registerRequest.username());
         if (checkUser != null) {
             throw new DataAccessException(403, "Error: already taken");

@@ -87,7 +87,7 @@ public class GameTests {
         gameDataCollection.add(new ListEntry(createResult1.gameID(), null, null, "myGame1"));
         gameDataCollection.add(new ListEntry(createResult2.gameID(), null, null, "myGame2"));
 
-        assertEquals(gameDataCollection, listResult.listEntryArrayList());
+        assertEquals(gameDataCollection, listResult.games());
     }
 
     @Test
