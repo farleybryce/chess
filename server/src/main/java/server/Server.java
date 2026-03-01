@@ -49,8 +49,7 @@ public class Server {
 
     private void exceptionHandler(DataAccessException ex, Context ctx) {
         ctx.status(ex.getStatusCode());
-        // this was working better before the map
-        ctx.json(Map.of("message", ex.getMessage()));
+        ctx.result(new Gson().toJson(Map.of("message", ex.getMessage())));
     }
 
     public void register(Context ctx) throws DataAccessException {
