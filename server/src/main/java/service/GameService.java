@@ -1,5 +1,6 @@
 package service;
 
+import chess.ChessGame;
 import dataaccess.AuthDAO;
 import dataaccess.DataAccessException;
 import dataaccess.GameDAO;
@@ -19,12 +20,18 @@ public class GameService {
     }
 
     public CreateResult createGame(String authToken, CreateRequest createRequest) throws DataAccessException {
+        if (createRequest.gameName() == null) {
+            throw new DataAccessException(400, "Error: bad request");
+        }
         authDAO.getAuth(authToken);
         int gameID = gameDAO.createGame(createRequest.gameName());
         return new CreateResult(gameID);
     }
 
     public void joinGame(String authToken, JoinRequest joinRequest) throws DataAccessException {
+        if (joinRequest.playerColor() != ChessGame.TeamColor.WHITE && joinRequest.playerColor() != ChessGame.TeamColor.BLACK) {
+            throw new DataAccessException(400, "Error: bad request");
+        }
         AuthData authData = authDAO.getAuth(authToken);
         gameDAO.getGame(joinRequest.gameID());
         gameDAO.joinGame(joinRequest.gameID(), joinRequest.playerColor(), authData.username());
