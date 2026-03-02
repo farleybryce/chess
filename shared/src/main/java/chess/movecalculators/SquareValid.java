@@ -20,7 +20,10 @@ public class SquareValid {
         } else { return false; }
     }
 
-    public static boolean checkLineOfSight(int targetRow, int targetCol, int rowVar, int colVar, ArrayList<ChessMove> legalMoves, ChessBoard board, ChessPosition myPosition, ChessPiece piece) {
+    public static boolean checkLineOfSight(int targetRow, int targetCol,
+                                           int rowVar, int colVar,
+                                           ArrayList<ChessMove> legalMoves, ChessBoard board,
+                                           ChessPosition myPosition, ChessPiece piece) {
         // check if looking out of bounds
         if ((targetRow < 1) || (8 < targetRow) || (targetCol < 1) || (8 < targetCol)) {
             return true;
