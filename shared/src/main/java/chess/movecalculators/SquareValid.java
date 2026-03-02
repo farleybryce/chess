@@ -1,4 +1,4 @@
-package chess.move_calculators;
+package chess.movecalculators;
 
 import chess.ChessBoard;
 import chess.ChessMove;
@@ -8,8 +8,10 @@ import chess.ChessPosition;
 import java.util.ArrayList;
 
 public class SquareValid {
-    public static boolean squareValid(int y, int x, ArrayList<ChessMove> legalMoves, ChessBoard board, ChessPosition myPosition, ChessPiece piece) {
-        ChessPosition targetPosition = new ChessPosition(y, x);
+    public static boolean squareValid(int row, int col,
+                                      ArrayList<ChessMove> legalMoves, ChessBoard board,
+                                      ChessPosition myPosition, ChessPiece piece) {
+        ChessPosition targetPosition = new ChessPosition(row, col);
         ChessPiece targetPiece = board.getPiece(targetPosition);
         // check if target space is occupied by piece of the same color
         if ((targetPiece == null) || (targetPiece.getTeamColor() != piece.getTeamColor())) {
