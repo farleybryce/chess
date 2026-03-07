@@ -31,7 +31,7 @@ public class DBAuthDAO implements AuthDAO {
 
     private final String[] createStatements = {
         """
-        CREATE TABLE IF NOT EXISTS  pet (
+        CREATE TABLE IF NOT EXISTS  auth (
           `id` int NOT NULL AUTO_INCREMENT,
           `username` varchar(256) NOT NULL,
           `authToken` varchar(256) NOT NULL,
