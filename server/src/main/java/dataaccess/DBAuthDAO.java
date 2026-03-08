@@ -16,6 +16,18 @@ import static dataaccess.DatabaseManager.executeUpdate;
 public class DBAuthDAO implements AuthDAO {
 
     public DBAuthDAO() throws DataAccessException{
+        String[] createStatements = {
+                """
+        CREATE TABLE IF NOT EXISTS  auth (
+          `id` int NOT NULL AUTO_INCREMENT,
+          `authToken` varchar(256) NOT NULL,
+          `username` varchar(256) NOT NULL,
+          `json` TEXT DEFAULT NULL,
+          PRIMARY KEY (`id`),
+          INDEX(authToken)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+        """
+        };
         configureDatabase(createStatements);
     }
 
@@ -50,7 +62,7 @@ public class DBAuthDAO implements AuthDAO {
     }
 
     public void deleteAuth(String authToken) throws DataAccessException {
-        var statement = "DELETE FROM auth WHERE id=?";
+        var statement = "DELETE FROM auth WHERE authToken=?";
         executeUpdate(statement, authToken);
     }
 
@@ -63,19 +75,6 @@ public class DBAuthDAO implements AuthDAO {
         var json = rs.getString("json");
         return new Gson().fromJson(json, AuthData.class);
     }
-
-    private final String[] createStatements = {
-        """
-        CREATE TABLE IF NOT EXISTS  auth (
-          `id` int NOT NULL AUTO_INCREMENT,
-          `authToken` varchar(256) NOT NULL,
-          `username` varchar(256) NOT NULL,
-          `json` TEXT DEFAULT NULL,
-          PRIMARY KEY (`id`),
-          INDEX(authToken),
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
-        """
-    };
 
 
 }

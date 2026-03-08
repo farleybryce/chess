@@ -18,13 +18,23 @@ public class Server {
     private final Javalin javalin;
 
     public Server() {
-        MemoryUserDAO memoryUserDAO = new MemoryUserDAO();
-        MemoryAuthDAO memoryAuthDAO = new MemoryAuthDAO();
+        DBUserDAO dbUserDAO = null;
+        try {
+            dbUserDAO = new DBUserDAO();
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
+        DBAuthDAO dBAuthDAO = null;
+        try {
+            dBAuthDAO = new DBAuthDAO();
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
         MemoryGameDAO memoryGameDAO = new MemoryGameDAO();
 
-        this.userService = new UserService(memoryUserDAO, memoryAuthDAO);
-        this.gameService = new GameService(memoryGameDAO, memoryAuthDAO);
-        this.clearService = new ClearService(memoryUserDAO, memoryGameDAO, memoryAuthDAO);
+        this.userService = new UserService(dbUserDAO, dBAuthDAO);
+        this.gameService = new GameService(memoryGameDAO, dBAuthDAO);
+        this.clearService = new ClearService(dbUserDAO, memoryGameDAO, dBAuthDAO);
 
         javalin = Javalin.create(config -> config.staticFiles.add("web"))
         // Register your endpoints and exception handlers here.

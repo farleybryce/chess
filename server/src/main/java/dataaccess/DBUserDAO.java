@@ -11,12 +11,25 @@ import static dataaccess.DatabaseManager.executeUpdate;
 public class DBUserDAO implements UserDAO {
 
     public DBUserDAO() throws DataAccessException{
+        String[] createStatements = {
+                """
+        CREATE TABLE IF NOT EXISTS  users (
+          `id` int NOT NULL AUTO_INCREMENT,
+          `username` varchar(256) NOT NULL,
+          `password` varchar(256) NOT NULL,
+          `email` varchar(256) NOT NULL,
+          `json` TEXT DEFAULT NULL,
+          PRIMARY KEY (`id`),
+          INDEX(username)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+        """
+        };
         configureDatabase(createStatements);
     }
 
     public UserData getUser(String username) throws DataAccessException {
         try (Connection conn = DatabaseManager.getConnection()) {
-            var statement = "SELECT json FROM user WHERE username=?";
+            var statement = "SELECT json FROM users WHERE username=?";
             try (PreparedStatement ps = conn.prepareStatement(statement)) {
                 ps.setString(1, username);
                 try (ResultSet rs = ps.executeQuery()) {
@@ -32,13 +45,13 @@ public class DBUserDAO implements UserDAO {
     }
 
     public void createUser(UserData userData) throws DataAccessException {
-        var statement = "INSERT INTO user (username, password, email, json) VALUES (?, ?, ?, ?)";
+        var statement = "INSERT INTO users (username, password, email, json) VALUES (?, ?, ?, ?)";
         String json = new Gson().toJson(userData);
         executeUpdate(statement, userData.username(), userData.password(), userData.email(), json);
     }
 
     public void clear() throws DataAccessException {
-        var statement = "TRUNCATE user";
+        var statement = "TRUNCATE users";
         executeUpdate(statement);
     }
 
@@ -47,17 +60,4 @@ public class DBUserDAO implements UserDAO {
         return new Gson().fromJson(json, UserData.class);
     }
 
-    private final String[] createStatements = {
-        """
-        CREATE TABLE IF NOT EXISTS  user (
-          `id` int NOT NULL AUTO_INCREMENT,
-          `username` varchar(256) NOT NULL,
-          `password` varchar(256) NOT NULL,
-          `email` varchar(256) NOT NULL,
-          `json` TEXT DEFAULT NULL,
-          PRIMARY KEY (`id`),
-          INDEX(username),
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
-        """
-    };
 }
