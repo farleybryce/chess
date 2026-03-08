@@ -38,7 +38,8 @@ public class DBUserDAO implements UserDAO {
     }
 
     public void clear() throws DataAccessException {
-
+        var statement = "TRUNCATE user";
+        executeUpdate(statement);
     }
 
     private UserData readUser(ResultSet rs) throws SQLException {
