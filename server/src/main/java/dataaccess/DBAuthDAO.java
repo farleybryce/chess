@@ -58,7 +58,7 @@ public class DBAuthDAO implements AuthDAO {
         } catch (Exception e) {
             throw new DataAccessException(500, String.format("Unable to read data: %s", e.getMessage()));
         }
-        return null;
+        throw new DataAccessException(401, "Error: unauthorized");
     }
 
     public void deleteAuth(String authToken) throws DataAccessException {
