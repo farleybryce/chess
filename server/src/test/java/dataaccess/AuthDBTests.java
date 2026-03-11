@@ -60,7 +60,7 @@ public class AuthDBTests {
     }
 
     @Test
-    public void successfulUserClearTest() throws DataAccessException {
+    public void successfulAuthClearTest() throws DataAccessException {
         dbAuthDAO.clear();
         assertThrows(DataAccessException.class, () -> {
             dbAuthDAO.getAuth(authData.authToken());
