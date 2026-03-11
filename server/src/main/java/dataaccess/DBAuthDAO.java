@@ -21,7 +21,7 @@ public class DBAuthDAO implements AuthDAO {
         CREATE TABLE IF NOT EXISTS  auth (
           `id` int NOT NULL AUTO_INCREMENT,
           `authToken` varchar(256) NOT NULL,
-          `username` varchar(256) NOT NULL UNIQUE,
+          `username` varchar(256) NOT NULL,
           `json` TEXT DEFAULT NULL,
           PRIMARY KEY (`id`),
           INDEX(authToken)

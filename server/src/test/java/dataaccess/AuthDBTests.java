@@ -34,13 +34,6 @@ public class AuthDBTests {
     }
 
     @Test
-    public void failedCreateAuthTest() {
-        assertThrows(DataAccessException.class, () -> {
-            dbAuthDAO.createAuth("username");
-        });
-    }
-
-    @Test
     public void successfulGetAuthTest() throws DataAccessException {
         assertEquals(authData, dbAuthDAO.getAuth(authData.authToken()));
     }

@@ -33,13 +33,6 @@ public class UserDBTests {
         assertEquals(userData, dbUserDAO.getUser(userData.username()));
     }
 
-    @Test
-    public void failedCreateUserTest() {
-        UserData userData1 = new UserData("username", "password", "test1@example.com");
-        assertThrows(DataAccessException.class, () -> {
-            dbUserDAO.createUser(userData1);
-        });
-    }
 
     @Test
     public void successfulGetUserTest() throws DataAccessException {

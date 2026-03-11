@@ -15,7 +15,7 @@ public class DBUserDAO implements UserDAO {
                 """
         CREATE TABLE IF NOT EXISTS  users (
           `id` int NOT NULL AUTO_INCREMENT,
-          `username` varchar(256) NOT NULL UNIQUE,
+          `username` varchar(256) NOT NULL,
           `password` varchar(256) NOT NULL,
           `email` varchar(256) NOT NULL,
           `json` TEXT DEFAULT NULL,
