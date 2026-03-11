@@ -39,7 +39,7 @@ public class DBUserDAO implements UserDAO {
                 }
             }
         } catch (Exception e) {
-            throw new DataAccessException(500, String.format("Unable to read data: %s", e.getMessage()));
+            throw new DataAccessException(500, String.format("Error: Unable to read data: %s", e.getMessage()));
         }
         return null;
     }
