@@ -1,11 +1,12 @@
 package client;
 
+import chess.ChessGame;
 import dataaccess.DataAccessException;
 import org.junit.jupiter.api.*;
-import server.LoginRequest;
-import server.RegisterLoginResult;
-import server.RegisterRequest;
-import server.Server;
+import server.*;
+
+import java.util.ArrayList;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 
@@ -74,6 +75,71 @@ public class ServerFacadeTests {
     void failedLogoutTest() throws DataAccessException {
         assertThrows(DataAccessException.class, () -> {
             facade.logout("ThisIsNotTheCorrectAuthToken");
+        });
+    }
+
+    @Test
+    void successfulCreateGameTest() throws DataAccessException {
+        var createResult = facade.createGame(new CreateRequest("MyGame"), registerLoginResult.authToken());
+        assertEquals(1, createResult.gameID());
+    }
+
+    @Test
+    void failedCreateGameTest() throws DataAccessException {
+        assertThrows(DataAccessException.class, () -> {
+            facade.createGame(new CreateRequest("MyGame"), "ThisIsNotTheCorrectAuthToken");
+        });
+    }
+
+    @Test
+    void successfulJoinGameTest() throws DataAccessException {
+        var createResult = facade.createGame(new CreateRequest("MyGame"), registerLoginResult.authToken());
+        assertDoesNotThrow(() -> {
+            facade.joinGame(new JoinRequest(ChessGame.TeamColor.WHITE, createResult.gameID()), registerLoginResult.authToken());
+        });
+    }
+
+    @Test
+    void failedJoinGameTest() throws DataAccessException {
+        assertThrows(DataAccessException.class, () -> {
+            facade.joinGame(new JoinRequest(ChessGame.TeamColor.WHITE, 1), registerLoginResult.authToken());
+        });
+        var createResult = facade.createGame(new CreateRequest("MyGame"), registerLoginResult.authToken());
+        facade.joinGame(new JoinRequest(ChessGame.TeamColor.WHITE, createResult.gameID()), registerLoginResult.authToken());
+        assertThrows(DataAccessException.class, () -> {
+            facade.joinGame(new JoinRequest(ChessGame.TeamColor.WHITE, createResult.gameID()), registerLoginResult.authToken());
+        });
+    }
+
+    @Test
+    void successfulListGamesTest() throws DataAccessException {
+        var createResult1 = facade.createGame(new CreateRequest("MyGame1"), registerLoginResult.authToken());
+        var createResult2 = facade.createGame(new CreateRequest("MyGame2"), registerLoginResult.authToken());
+        var listResult = facade.listGames(registerLoginResult.authToken());
+        ListEntry listEntry1 = new ListEntry(createResult1.gameID(), null, null, "MyGame1");
+        ListEntry listEntry2 = new ListEntry(createResult2.gameID(), null, null, "MyGame2");
+        ArrayList<ListEntry> listEntryArrayList = new ArrayList<>();
+        listEntryArrayList.add(listEntry1);
+        listEntryArrayList.add(listEntry2);
+        ListResult listResultTest = new ListResult(listEntryArrayList);
+        assertEquals(listResultTest, listResult);
+    }
+
+    @Test
+    void failedListGamesTest() throws DataAccessException {
+        assertThrows(DataAccessException.class, () -> {
+            facade.listGames("ThisIsNotTheCorrectAuthToken");
+        });
+    }
+
+    @Test
+    void successfulClearTest() throws DataAccessException {
+        facade.clear();
+        assertThrows(DataAccessException.class, () -> {
+            facade.createGame(new CreateRequest("MyGame"), registerLoginResult.authToken());
+        });
+        assertThrows(DataAccessException.class, () -> {
+            facade.login(new LoginRequest("player1", "password"));
         });
     }
 
