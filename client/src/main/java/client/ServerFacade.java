@@ -21,55 +21,58 @@ public class ServerFacade {
     }
 
     public RegisterLoginResult register(RegisterRequest registerRequest) throws DataAccessException {
-        var request = buildRequest("POST", "/user", registerRequest);
+        var request = buildRequest("POST", "/user", registerRequest, null);
         var response = sendRequest(request);
         return handleResponse(response, RegisterLoginResult.class);
     }
 
     public RegisterLoginResult login(LoginRequest loginRequest) throws DataAccessException {
-        var request = buildRequest("POST", "/session", loginRequest);
+        var request = buildRequest("POST", "/session", loginRequest, null);
         var response = sendRequest(request);
         return handleResponse(response, RegisterLoginResult.class);
     }
 
-    public void logout() throws DataAccessException {
-        var request = buildRequest("DELETE", "/session", null);
+    public void logout(String authToken) throws DataAccessException {
+        var request = buildRequest("DELETE", "/session", null, authToken);
         var response = sendRequest(request);
         handleResponse(response, null);
     }
 
-    public CreateResult createGame(CreateRequest createRequest) throws DataAccessException {
-        var request = buildRequest("POST", "/game", createRequest);
+    public CreateResult createGame(CreateRequest createRequest, String authToken) throws DataAccessException {
+        var request = buildRequest("POST", "/game", createRequest, authToken);
         var response = sendRequest(request);
         return handleResponse(response, CreateResult.class);
     }
 
-    public void joinGame(JoinRequest joinRequest) throws DataAccessException {
-        var request = buildRequest("PUT", "/game", joinRequest);
+    public void joinGame(JoinRequest joinRequest, String authToken) throws DataAccessException {
+        var request = buildRequest("PUT", "/game", joinRequest, authToken);
         var response = sendRequest(request);
         handleResponse(response, null);
     }
 
-    public ListResult listGames() throws DataAccessException {
-        var request = buildRequest("GET", "/game", null);
+    public ListResult listGames(String authToken) throws DataAccessException {
+        var request = buildRequest("GET", "/game", null, authToken);
         var response = sendRequest(request);
         return handleResponse(response, ListResult.class);
     }
 
     public void clear() throws DataAccessException {
-        var request = buildRequest("DELETE", "/db", null);
+        var request = buildRequest("DELETE", "/db", null, null);
         sendRequest(request);
     }
 
     /*
     --- HTTP helper methods ---
      */
-    private HttpRequest buildRequest(String method, String path, Object body) {
+    private HttpRequest buildRequest(String method, String path, Object body, String authToken) {
         var request = HttpRequest.newBuilder()
                 .uri(URI.create(serverUrl + path))
                 .method(method, makeRequestBody(body));
         if (body != null) {
             request.setHeader("Content-Type", "application/json");
+        }
+        if (authToken != null) {
+            request.setHeader("authorization", authToken);
         }
         return request.build();
     }
