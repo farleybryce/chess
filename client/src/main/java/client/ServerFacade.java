@@ -2,9 +2,7 @@ package client;
 
 import com.google.gson.Gson;
 import dataaccess.DataAccessException;
-import server.LoginRequest;
-import server.RegisterLoginResult;
-import server.RegisterRequest;
+import server.*;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -40,30 +38,32 @@ public class ServerFacade {
         handleResponse(response, null);
     }
 
-    public Pet addPet(Pet pet) throws DataAccessException {
-        var request = buildRequest("POST", "/pet", pet);
+    public CreateResult createGame(CreateRequest createRequest) throws DataAccessException {
+        var request = buildRequest("POST", "/game", createRequest);
         var response = sendRequest(request);
-        return handleResponse(response, Pet.class);
+        return handleResponse(response, CreateResult.class);
     }
 
-    public void deletePet(int id) throws DataAccessException {
-        var path = String.format("/pet/%s", id);
-        var request = buildRequest("DELETE", path, null);
+    public void joinGame(JoinRequest joinRequest) throws DataAccessException {
+        var request = buildRequest("PUT", "/game", joinRequest);
         var response = sendRequest(request);
         handleResponse(response, null);
     }
 
-    public void deleteAllPets() throws DataAccessException {
-        var request = buildRequest("DELETE", "/pet", null);
+    public ListResult listGames() throws DataAccessException {
+        var request = buildRequest("GET", "/game", null);
+        var response = sendRequest(request);
+        return handleResponse(response, ListResult.class);
+    }
+
+    public void clear() throws DataAccessException {
+        var request = buildRequest("DELETE", "/db", null);
         sendRequest(request);
     }
 
-    public PetList listPets() throws DataAccessException {
-        var request = buildRequest("GET", "/pet", null);
-        var response = sendRequest(request);
-        return handleResponse(response, PetList.class);
-    }
-
+    /*
+    --- HTTP helper methods ---
+     */
     private HttpRequest buildRequest(String method, String path, Object body) {
         var request = HttpRequest.newBuilder()
                 .uri(URI.create(serverUrl + path))
