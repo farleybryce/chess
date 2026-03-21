@@ -2,9 +2,7 @@ package client;
 
 import com.google.gson.*;
 import dataaccess.DataAccessException;
-import server.LoginRequest;
-import server.RegisterLoginResult;
-import server.RegisterRequest;
+import server.*;
 import ui.EscapeSequences.*;
 
 import java.util.Arrays;
@@ -56,6 +54,8 @@ public class ChessClient {
                 case "register" -> register(params);
                 case "login" -> login(params);
                 case "logout" -> logout();
+                case "create" -> create(params);
+                case "list" -> list();
                 case "quit" -> quit();
                 default -> help();
             };
@@ -66,15 +66,23 @@ public class ChessClient {
     }
 
     private String quit() {
-        return (state == State.LOGGEDIN) ?  help() : "quit";
+        if (state == State.LOGGEDIN) {
+            return help();
+        } else if (state == State.LOGGEDOUT) {
+            return "quit";
+        } else {
+            state = State.LOGGEDIN;
+            return "";
+        }
     }
 
     private String clear() throws DataAccessException {
         server.clear();
-        return SET_TEXT_COLOR_BLUE + "Cleared";
+        return SET_TEXT_COLOR_BLUE + "Database Cleared";
     }
 
     private String register(String... params) throws DataAccessException {
+        if (state != State.LOGGEDOUT) {return help();}
         if (params.length >= 3) {
             username = params[0];
             String password = params[1];
@@ -88,6 +96,7 @@ public class ChessClient {
     }
 
     private String login(String... params) throws DataAccessException {
+        if (state != State.LOGGEDOUT) {return help();}
         if (params.length >= 2) {
             username = params[0];
             String password = params[1];
@@ -100,9 +109,33 @@ public class ChessClient {
     }
 
     private String logout() throws DataAccessException {
+        if (state != State.LOGGEDIN) {return help();}
         server.logout(authToken);
         state = State.LOGGEDOUT;
         return SET_TEXT_COLOR_GREEN + "Successfully logged out";
+    }
+
+    private String create(String... params) throws DataAccessException {
+        if (state != State.LOGGEDIN) {return help();}
+        server.createGame(new CreateRequest(params[0]), authToken);
+        return SET_TEXT_COLOR_GREEN + "Game created successfully";
+    }
+
+    private String list() throws DataAccessException {
+        if (state != State.LOGGEDIN) {return help();}
+        ListResult listResult = server.listGames(authToken);
+        String gameList = "";
+        int count = 0;
+        for (ListEntry listEntry : listResult.games()) {
+            count += 1;
+            String white = listEntry.whiteUsername();
+            String black = listEntry.blackUsername();
+            gameList += count + ". " + listEntry.gameName()
+                    + "\n   White Player: " + ((white != null) ? white : "[available]")
+                    + "\n   Black Player: " + ((black != null) ? black : "[available]")
+                    + "\n";
+        }
+        return gameList;
     }
 
     private String menu() {
