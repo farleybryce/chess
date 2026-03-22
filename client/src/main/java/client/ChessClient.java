@@ -1,13 +1,18 @@
 package client;
 
+import chess.ChessBoard;
+import chess.ChessGame;
 import com.google.gson.*;
 import dataaccess.DataAccessException;
 import server.*;
 import ui.EscapeSequences.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Scanner;
 
+import static client.DrawBoard.drawBoard;
 import static ui.EscapeSequences.*;
 
 public class ChessClient {
@@ -56,6 +61,7 @@ public class ChessClient {
                 case "logout" -> logout();
                 case "create" -> create(params);
                 case "list" -> list();
+                case "play" -> play(params);
                 case "quit" -> quit();
                 default -> help();
             };
@@ -117,8 +123,11 @@ public class ChessClient {
 
     private String create(String... params) throws DataAccessException {
         if (state != State.LOGGEDIN) {return help();}
-        server.createGame(new CreateRequest(params[0]), authToken);
-        return SET_TEXT_COLOR_GREEN + "Game created successfully";
+        if (params.length >= 1) {
+            server.createGame(new CreateRequest(params[0]), authToken);
+            return SET_TEXT_COLOR_GREEN + "Game created successfully";
+        }
+        throw new DataAccessException(400, "Expected: [game name]");
     }
 
     private String list() throws DataAccessException {
@@ -138,6 +147,32 @@ public class ChessClient {
         return gameList;
     }
 
+    private String play(String... params) throws DataAccessException {
+        if (state != State.LOGGEDIN) {return help();}
+        if (params.length < 2) {
+            throw new DataAccessException(400, "Expected: [game number] [white/black]");
+        }
+        ChessGame.TeamColor color = null;
+        int gameNumber = 0;
+        try {
+            gameNumber = Integer.parseInt(params[0]);
+        } catch (NumberFormatException ex) {
+            throw new DataAccessException(400, "Expected: [game number] [white/black]");
+        }
+        ListResult listResult = server.listGames(authToken);
+        ArrayList<ListEntry> listEntryArrayList = listResult.games();
+        ListEntry listEntry = listEntryArrayList.get(gameNumber - 1);
+        int gameID = listEntry.gameID();
+        if (Objects.equals(params[1], "white")) {
+            color = ChessGame.TeamColor.WHITE;
+        } else if (Objects.equals(params[1], "black")) {
+            color = ChessGame.TeamColor.BLACK;
+        } else { throw new DataAccessException(400, "Expected: [game number] [white/black]"); }
+        server.joinGame(new JoinRequest(color, gameID), authToken);
+        state = State.PLAYING;
+        return "";
+    }
+
     private String menu() {
         if (state == State.LOGGEDOUT) {
             return """
@@ -154,7 +189,7 @@ public class ChessClient {
                     - logout
                     - create [game name]
                     - list
-                    - play [game number]
+                    - play [game number] [white/black]
                     - observe [game number]
                     """;
         } else if (state == State.PLAYING) {
@@ -162,7 +197,9 @@ public class ChessClient {
                     Choose one of the options below:
                     - help
                     - quit
-                    """;
+                    
+                    """
+                    + drawBoard(ChessGame.TeamColor.WHITE, new ChessBoard());
         } else {
             return """
                     Choose one of the options below:
@@ -194,7 +231,8 @@ public class ChessClient {
                     - logout (returns you to the login menu)
                     - create [game name] (creates a new chess game)
                     - list (lists all exiting games)
-                    - play [game number] (adds you to selected game as a player)
+                    - play [game number] [white/black]
+                      (adds you to selected game as a player and desired color)
                     - observe [game number] (adds you to selected game as an observer)
                     """;
         } else if (state == State.PLAYING) {
