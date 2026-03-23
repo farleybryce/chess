@@ -62,12 +62,17 @@ public class ChessClient {
                 case "create" -> create(params);
                 case "list" -> list();
                 case "play" -> play(params);
+                case "observe" -> observe(params);
                 case "quit" -> quit();
                 default -> help();
             };
         } catch (DataAccessException ex) {
-            JsonObject jsonObject = JsonParser.parseString(ex.getMessage()).getAsJsonObject();
-            return SET_TEXT_COLOR_RED + jsonObject.get("message").getAsString();
+            try {
+                JsonObject jsonObject = JsonParser.parseString(ex.getMessage()).getAsJsonObject();
+                return SET_TEXT_COLOR_RED + jsonObject.get("message").getAsString();
+            } catch (Exception e) {
+                return SET_TEXT_COLOR_RED + ex.getMessage();
+            }
         }
     }
 
@@ -147,6 +152,16 @@ public class ChessClient {
         return gameList;
     }
 
+    private int getGameID(int gameNumber) throws DataAccessException {
+        ListResult listResult = server.listGames(authToken);
+        ArrayList<ListEntry> listEntryArrayList = listResult.games();
+        if (gameNumber < 1 || gameNumber > listEntryArrayList.size()) {
+            throw new DataAccessException(400, "Error: give a valid game number");
+        }
+        ListEntry listEntry = listEntryArrayList.get(gameNumber - 1);
+        return listEntry.gameID();
+    }
+
     private String play(String... params) throws DataAccessException {
         if (state != State.LOGGEDIN) {return help();}
         if (params.length < 2) {
@@ -159,13 +174,7 @@ public class ChessClient {
         } catch (NumberFormatException ex) {
             throw new DataAccessException(400, "Expected: [game number] [white/black]");
         }
-        ListResult listResult = server.listGames(authToken);
-        ArrayList<ListEntry> listEntryArrayList = listResult.games();
-        if (gameNumber< 1 || gameNumber > listEntryArrayList.size()) {
-            throw new DataAccessException(400, "Error: give a valid game number");
-        }
-        ListEntry listEntry = listEntryArrayList.get(gameNumber - 1);
-        int gameID = listEntry.gameID();
+        int gameID = getGameID(gameNumber);
         if (Objects.equals(params[1], "white")) {
             color = ChessGame.TeamColor.WHITE;
         } else if (Objects.equals(params[1], "black")) {
@@ -177,6 +186,24 @@ public class ChessClient {
         board.resetBoard();
         return drawBoard(color, board);
     }
+
+    private String observe(String ... params) throws DataAccessException {
+        if (state != State.LOGGEDIN) {return help();}
+        if (params.length < 1) {
+            throw new DataAccessException(400, "Expected: [game number]");
+        }
+        int gameNumber = 0;
+        try {
+            gameNumber = Integer.parseInt(params[0]);
+        } catch (NumberFormatException ex) {
+            throw new DataAccessException(400, "Expected: [game number] [white/black]");
+        }
+        int gameID = getGameID(gameNumber);
+        state = State.OBSERVING;
+        ChessBoard board = new ChessBoard();
+        board.resetBoard();
+        return drawBoard(ChessGame.TeamColor.WHITE, board);
+    };
 
     private String menu() {
         if (state == State.LOGGEDOUT) {
@@ -202,7 +229,6 @@ public class ChessClient {
                     Choose one of the options below:
                     - help
                     - quit
-                    
                     """;
         } else {
             return """
