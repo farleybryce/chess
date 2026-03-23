@@ -161,6 +161,9 @@ public class ChessClient {
         }
         ListResult listResult = server.listGames(authToken);
         ArrayList<ListEntry> listEntryArrayList = listResult.games();
+        if (gameNumber< 1 || gameNumber > listEntryArrayList.size()) {
+            throw new DataAccessException(400, "Error: give a valid game number");
+        }
         ListEntry listEntry = listEntryArrayList.get(gameNumber - 1);
         int gameID = listEntry.gameID();
         if (Objects.equals(params[1], "white")) {
@@ -170,7 +173,9 @@ public class ChessClient {
         } else { throw new DataAccessException(400, "Expected: [game number] [white/black]"); }
         server.joinGame(new JoinRequest(color, gameID), authToken);
         state = State.PLAYING;
-        return "";
+        ChessBoard board = new ChessBoard();
+        board.resetBoard();
+        return drawBoard(color, board);
     }
 
     private String menu() {
@@ -198,8 +203,7 @@ public class ChessClient {
                     - help
                     - quit
                     
-                    """
-                    + drawBoard(ChessGame.TeamColor.WHITE, new ChessBoard());
+                    """;
         } else {
             return """
                     Choose one of the options below:
