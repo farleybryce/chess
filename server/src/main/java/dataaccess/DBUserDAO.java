@@ -2,6 +2,7 @@ package dataaccess;
 
 import com.google.gson.Gson;
 import model.UserData;
+import server.DataAccessException;
 
 import java.sql.*;
 
@@ -10,7 +11,7 @@ import static dataaccess.DatabaseManager.executeUpdate;
 
 public class DBUserDAO implements UserDAO {
 
-    public DBUserDAO() throws DataAccessException{
+    public DBUserDAO() throws DataAccessException {
         String[] createStatements = {
                 """
         CREATE TABLE IF NOT EXISTS  users (

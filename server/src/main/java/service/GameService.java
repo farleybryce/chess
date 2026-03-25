@@ -2,7 +2,7 @@ package service;
 
 import chess.ChessGame;
 import dataaccess.AuthDAO;
-import dataaccess.DataAccessException;
+import server.DataAccessException;
 import dataaccess.GameDAO;
 import model.AuthData;
 import model.GameData;

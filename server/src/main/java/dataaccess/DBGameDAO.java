@@ -4,6 +4,7 @@ import chess.ChessGame;
 import com.google.gson.Gson;
 import model.AuthData;
 import model.GameData;
+import server.DataAccessException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -16,7 +17,7 @@ import static dataaccess.DatabaseManager.executeUpdate;
 
 public class DBGameDAO implements GameDAO{
 
-    public DBGameDAO() throws DataAccessException{
+    public DBGameDAO() throws DataAccessException {
         configureDatabase(createStatements);
     }
 

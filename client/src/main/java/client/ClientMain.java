@@ -1,7 +1,7 @@
 package client;
 
 import chess.*;
-import dataaccess.DataAccessException;
+import server.DataAccessException;
 
 
 public class ClientMain {

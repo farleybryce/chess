@@ -1,8 +1,6 @@
-package client;
+package server;
 
 import com.google.gson.Gson;
-import dataaccess.DataAccessException;
-import server.*;
 
 import java.net.URI;
 import java.net.http.HttpClient;

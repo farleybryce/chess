@@ -1,7 +1,7 @@
 package service;
 
 import dataaccess.AuthDAO;
-import dataaccess.DataAccessException;
+import server.DataAccessException;
 import dataaccess.UserDAO;
 import model.AuthData;
 import model.UserData;

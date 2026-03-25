@@ -3,9 +3,8 @@ package client;
 import chess.ChessBoard;
 import chess.ChessGame;
 import com.google.gson.*;
-import dataaccess.DataAccessException;
+import server.DataAccessException;
 import server.*;
-import ui.EscapeSequences.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -4,6 +4,8 @@ import model.AuthData;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import server.DataAccessException;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class AuthDBTests {
