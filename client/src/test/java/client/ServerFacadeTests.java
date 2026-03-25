@@ -1,9 +1,10 @@
 package client;
 
 import chess.ChessGame;
-import server.DataAccessException;
+
 import org.junit.jupiter.api.*;
-import server.*;
+import facade.*;
+import server.Server;
 
 import java.util.ArrayList;
 

@@ -1,7 +1,7 @@
 package dataaccess;
 
 import model.AuthData;
-import server.DataAccessException;
+import facade.DataAccessException;
 
 public interface AuthDAO {
     AuthData createAuth(String username) throws DataAccessException;

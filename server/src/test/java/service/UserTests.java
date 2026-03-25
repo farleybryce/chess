@@ -1,15 +1,13 @@
 package service;
 
-import server.DataAccessException;
+
 import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryUserDAO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-import server.LoginRequest;
-import server.RegisterLoginResult;
-import server.RegisterRequest;
+import facade.*;
 
 public class UserTests {
 

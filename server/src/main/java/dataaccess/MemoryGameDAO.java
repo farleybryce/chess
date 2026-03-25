@@ -2,7 +2,7 @@ package dataaccess;
 
 import chess.ChessGame;
 import model.GameData;
-import server.DataAccessException;
+import facade.DataAccessException;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -1,6 +1,6 @@
 package dataaccess;
 
-import server.DataAccessException;
+import facade.DataAccessException;
 
 import java.sql.*;
 import java.util.Properties;

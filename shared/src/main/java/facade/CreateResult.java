@@ -1,3 +1,3 @@
-package server;
+package facade;
 
 public record CreateResult(int gameID) {}

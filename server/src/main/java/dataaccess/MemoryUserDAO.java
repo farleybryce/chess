@@ -1,7 +1,7 @@
 package dataaccess;
 
 import model.UserData;
-import server.RegisterLoginResult;
+import facade.RegisterLoginResult;
 
 import java.util.HashMap;
 import java.util.HashSet;

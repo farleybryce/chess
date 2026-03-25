@@ -1,7 +1,7 @@
 package service;
 
 import dataaccess.AuthDAO;
-import server.DataAccessException;
+import facade.DataAccessException;
 import dataaccess.GameDAO;
 import dataaccess.UserDAO;
 

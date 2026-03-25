@@ -1,11 +1,10 @@
 package service;
 
-import server.DataAccessException;
 import dataaccess.MemoryAuthDAO;
 import dataaccess.MemoryGameDAO;
 import dataaccess.MemoryUserDAO;
 import org.junit.jupiter.api.Test;
-import server.*;
+import facade.*;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 

@@ -1,8 +1,8 @@
 package dataaccess;
 
 import model.UserData;
-import server.DataAccessException;
-import server.RegisterLoginResult;
+import facade.DataAccessException;
+import facade.RegisterLoginResult;
 
 public interface UserDAO {
     UserData getUser(String username) throws DataAccessException;

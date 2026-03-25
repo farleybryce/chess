@@ -2,11 +2,11 @@ package service;
 
 import chess.ChessGame;
 import dataaccess.AuthDAO;
-import server.DataAccessException;
+
 import dataaccess.GameDAO;
 import model.AuthData;
 import model.GameData;
-import server.*;
+import facade.*;
 
 import java.util.ArrayList;
 
