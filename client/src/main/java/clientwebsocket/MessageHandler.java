@@ -1,6 +1,6 @@
-package websocket;
+package clientwebsocket;
 
-import websocket.messages.ServerMessage;
+import sharedwebsocket.messages.ServerMessage;
 
 public interface MessageHandler {
     void notify(ServerMessage serverMessage);

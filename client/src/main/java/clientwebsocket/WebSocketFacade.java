@@ -1,8 +1,8 @@
-package websocket;
+package clientwebsocket;
 
 import com.google.gson.Gson;
 import facade.DataAccessException;
-import websocket.messages.ServerMessage;
+import sharedwebsocket.messages.ServerMessage;
 
 import jakarta.websocket.*;
 
