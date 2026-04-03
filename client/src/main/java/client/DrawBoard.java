@@ -52,30 +52,22 @@ public class DrawBoard {
 
     private static ChessGame.TeamColor getSquareColor(int row, int col, ChessGame.TeamColor teamColor) {
         ChessGame.TeamColor color = ChessGame.TeamColor.WHITE;
-        if (teamColor == ChessGame.TeamColor.WHITE) {
-            if ((row + col) % 2 == 0) { color = ChessGame.TeamColor.BLACK; }
-            return color;
-        } else {
-            if ((row + col) % 2 == 1) { color = ChessGame.TeamColor.BLACK; }
-            return color;
-        }
-
+        if ((row + col) % 2 == 0) { color = ChessGame.TeamColor.BLACK; }
+        return color;
     }
-    private static String drawPieceSquares(int i, ChessBoard board, ChessGame.TeamColor teamColor) {
+    private static String drawPieceSquares(int i, int j, ChessBoard board, ChessGame.TeamColor teamColor) {
         String pieceSquaresString = "";
-        pieceSquaresString += drawNumberRowSquare(i);
-        for (int j = 1; j < 9; j++) {
-            ChessPiece piece = board.getPiece(new ChessPosition(i, j));
-            ChessGame.TeamColor squareColor = getSquareColor(i, j, teamColor);
-            ChessGame.TeamColor pieceColor;
-            if (piece != null) {
-                pieceColor = piece.getTeamColor();
-            } else {
-                pieceColor = ChessGame.TeamColor.BLACK;
-            }
-            pieceSquaresString += drawSquare(squareColor, pieceColor, piece);
+
+        ChessPiece piece = board.getPiece(new ChessPosition(i, j));
+        ChessGame.TeamColor squareColor = getSquareColor(i, j, teamColor);
+        ChessGame.TeamColor pieceColor;
+        if (piece != null) {
+            pieceColor = piece.getTeamColor();
+        } else {
+            pieceColor = ChessGame.TeamColor.BLACK;
         }
-        pieceSquaresString += drawNumberRowSquare(i) + RESET_BG_COLOR + "\n";
+        pieceSquaresString += drawSquare(squareColor, pieceColor, piece);
+
         return pieceSquaresString;
     }
 
@@ -84,11 +76,19 @@ public class DrawBoard {
         boardString += drawLetterRow(teamColor) + "\n";
         if (teamColor == ChessGame.TeamColor.WHITE) {
             for (int i=8; i>0; i--) {
-                boardString += drawPieceSquares(i, board, teamColor);
+                boardString += drawNumberRowSquare(i) + RESET_BG_COLOR;
+                for (int j = 1; j < 9; j++) {
+                    boardString += drawPieceSquares(i, j, board, teamColor);
+                }
+                boardString += drawNumberRowSquare(i) + RESET_BG_COLOR + "\n";
             }
         } else {
             for (int i=1; i<9; i++) {
-                boardString += drawPieceSquares(i, board, teamColor);
+                boardString += drawNumberRowSquare(i) + RESET_BG_COLOR;
+                for (int j = 8; j > 0; j--) {
+                    boardString += drawPieceSquares(i, j, board, teamColor);
+                }
+                boardString += drawNumberRowSquare(i) + RESET_BG_COLOR + "\n";
             }
         }
         boardString += drawLetterRow(teamColor) + "\n";
