@@ -45,6 +45,12 @@ public class MemoryGameDAO implements GameDAO {
         gameDataHashMap.put(gameID, updatedGameData);
     }
 
+    public void updateGame(int gameID, ChessGame chessGame) throws DataAccessException {
+        GameData gameData = gameDataHashMap.get(gameID);
+        GameData updatedGameData = new GameData(gameID, gameData.whiteUsername(), gameData.blackUsername(), gameData.gameName(), chessGame);
+        gameDataHashMap.put(gameID, updatedGameData);
+    }
+
     public ArrayList<GameData> listGames() {
         return new ArrayList<>(gameDataHashMap.values());
     }

@@ -80,6 +80,12 @@ public class DBGameDAO implements GameDAO{
         return gameList;
     }
 
+    public void updateGame(int gameID, ChessGame chessGame) throws DataAccessException {
+        String statement = "UPDATE game SET game=? WHERE id=?";
+        String game = new Gson().toJson(chessGame);
+        executeUpdate(statement, game, gameID);
+    }
+
     public void clear() throws DataAccessException {
         var statement = "TRUNCATE game";
         executeUpdate(statement);

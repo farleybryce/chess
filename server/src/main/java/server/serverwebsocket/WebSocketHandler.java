@@ -1,6 +1,8 @@
 package server.serverwebsocket;
 
 import chess.ChessGame;
+import chess.ChessMove;
+import chess.InvalidMoveException;
 import com.google.gson.Gson;
 import dataaccess.AuthDAO;
 import dataaccess.GameDAO;
@@ -14,6 +16,7 @@ import io.javalin.websocket.WsMessageHandler;
 import model.AuthData;
 import model.GameData;
 import org.eclipse.jetty.websocket.api.Session;
+import server.Server;
 import sharedwebsocket.commands.UserGameCommand;
 import sharedwebsocket.messages.ServerMessage;
 
@@ -41,15 +44,15 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         try {
             UserGameCommand userGameCommand = new Gson().fromJson(ctx.message(), UserGameCommand.class);
             switch (userGameCommand.getCommandType()) {
-                case ENTER -> enter(action.visitorName(), ctx.session);
                 case EXIT -> exit(action.visitorName(), ctx.session);
                 case LEAVE -> leave();
                 case RESIGN -> resign();
                 case CONNECT -> connect(userGameCommand.getAuthToken(), userGameCommand.getGameID(),
                         userGameCommand.getColor(), ctx.session);
-                case MAKE_MOVE -> move();
+                case MAKE_MOVE -> move(userGameCommand.getAuthToken(), userGameCommand.getGameID(),
+                        userGameCommand.getChessMove(), ctx.session);
             }
-        } catch (IOException | DataAccessException ex) {
+        } catch (IOException | DataAccessException | InvalidMoveException ex) {
             ex.printStackTrace();
         }
     }
@@ -59,15 +62,63 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         System.out.println("Websocket closed");
     }
 
+    private String getUserFromAuth(String authToken) throws DataAccessException {
+        AuthData authData = authDAO.getAuth(authToken);
+        return authData.username();
+    }
+
+    private ChessGame getGameFromID(int gameID) throws DataAccessException {
+        GameData gameData = gameDAO.getGame(gameID);
+        return gameData.game();
+    }
+
+    private String columnToNumber(int num) {
+        switch (num) {
+            case 1 -> {return "a";}
+            case 2 -> {return "b";}
+            case 3 -> {return "c";}
+            case 4 -> {return "d";}
+            case 5 -> {return "e";}
+            case 6 -> {return "f";}
+            case 7 -> {return "g";}
+            case 8 -> {return "h";}
+            default -> {return "!";}
+        }
+    }
+
+    private String decodeMove(ChessMove chessMove) {
+        int startRow = chessMove.getStartPosition().getRow();
+        int startCol = chessMove.getStartPosition().getColumn();
+        int endRow = chessMove.getStartPosition().getRow();
+        int endCol = chessMove.getStartPosition().getColumn();
+        String startColStr = columnToNumber(startCol);
+        String endColStr = columnToNumber(endCol);
+        return String.format("%s%d%s%d", startColStr, startRow, endColStr, endRow);
+    }
+
     private void connect(String authToken, int gameID, ChessGame.TeamColor color, Session session) throws DataAccessException, IOException {
         connections.add(gameID, session);
-        AuthData authData = authDAO.getAuth(authToken);
-        String username = authData.username();
-        var message = String.format("%s has connected to the game as %s", username, color);
-        var connectServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message);
-        var loadServerMessage = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, null);
+        String username = getUserFromAuth(authToken);
+        String teamColor = color.toString();
+        ChessGame game = getGameFromID(gameID);
+        var message = String.format("%s has connected to the game as %s", username, teamColor);
+        var connectServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null);
+        var loadServerMessage = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, null, game);
         connections.broadcast(gameID, session, connectServerMessage);
         connections.returnToSender(gameID, session, loadServerMessage);
+    }
+
+    private void move(String authToken, int gameID, ChessMove chessMove, Session session) throws DataAccessException, InvalidMoveException, IOException {
+        String username = getUserFromAuth(authToken);
+        ChessGame game = getGameFromID(gameID);
+        game.makeMove(chessMove);
+        gameDAO.updateGame(gameID, game);
+        String moveStr = decodeMove(chessMove);
+        var message = String.format("%s moved %s", username, moveStr);
+        var loadServerMessage = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, null, game);
+        var moveServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null);
+        connections.broadcast(gameID, null, loadServerMessage);
+        connections.broadcast(gameID, session, moveServerMessage);
     }
 
 
