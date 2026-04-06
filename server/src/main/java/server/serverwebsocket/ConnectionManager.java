@@ -38,4 +38,16 @@ public class ConnectionManager {
             }
         }
     }
+
+    public void returnToSender(int gameID, Session includeSession, ServerMessage serverMessage) throws IOException {
+        Set<Session> sessions = connections.get(gameID);
+        String msg = new Gson().toJson(serverMessage);
+        for (Session c : sessions) {
+            if (c.isOpen()) {
+                if (c.equals(includeSession)) {
+                    c.getRemote().sendString(msg);
+                }
+            }
+        }
+    }
 }
