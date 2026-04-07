@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import dataaccess.*;
 import io.javalin.*;
 import io.javalin.http.Context;
+import server.serverwebsocket.WebSocketHandler;
 import service.ClearService;
 import service.GameService;
 import service.UserService;
@@ -16,6 +17,7 @@ public class Server {
     private final GameService gameService;
     private final ClearService clearService;
     private final Javalin javalin;
+    private final WebSocketHandler webSocketHandler;
 
     public Server() {
         DBUserDAO dbUserDAO = null;
@@ -41,6 +43,8 @@ public class Server {
         this.gameService = new GameService(dbGameDAO, dbAuthDAO);
         this.clearService = new ClearService(dbUserDAO, dbGameDAO, dbAuthDAO);
 
+        this.webSocketHandler = new WebSocketHandler(dbAuthDAO, dbGameDAO);
+
         javalin = Javalin.create(config -> config.staticFiles.add("web"))
         // Register your endpoints and exception handlers here.
         .post("/user", this::register)
@@ -50,7 +54,12 @@ public class Server {
         .put("/game", this::joinGame)
         .get("/game", this::listGames)
         .delete("/db", this::clear)
-        .exception(DataAccessException.class, this::exceptionHandler);
+        .exception(DataAccessException.class, this::exceptionHandler)
+        .ws("/ws", ws -> {
+            ws.onConnect(webSocketHandler);
+            ws.onMessage(webSocketHandler);
+            ws.onClose(webSocketHandler);
+        });
     }
 
     public int run(int desiredPort) {
