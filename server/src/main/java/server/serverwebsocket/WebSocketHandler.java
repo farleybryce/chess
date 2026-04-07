@@ -111,31 +111,36 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     private void move(String authToken, int gameID, ChessMove chessMove, Session session) throws DataAccessException, InvalidMoveException, IOException {
         String username = getUserFromAuth(authToken);
         ChessGame game = getGameFromID(gameID);
-        game.makeMove(chessMove);
-        gameDAO.updateGame(gameID, game);
-        String moveStr = decodeMove(chessMove);
-        var message = String.format("%s moved %s", username, moveStr);
-        var loadServerMessage = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, null, game);
-        var moveServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null);
-        connections.broadcast(gameID, null, loadServerMessage);
-        connections.broadcast(gameID, session, moveServerMessage);
-    }
-
-
-    private void exit(String visitorName, Session session) throws IOException {
-        var message = String.format("%s left the shop", visitorName);
-        var notification = new Notification(Notification.Type.DEPARTURE, message);
-        connections.broadcast(session, notification);
-        connections.remove(session);
-    }
-
-    public void makeNoise(String petName, String sound) throws ResponseException {
-        try {
-            var message = String.format("%s says %s", petName, sound);
-            var notification = new Notification(Notification.Type.NOISE, message);
-            connections.broadcast(null, notification);
-        } catch (Exception ex) {
-            throw new ResponseException(ResponseException.Code.ServerError, ex.getMessage());
+        if (game.getIsOver()) {
+            var errorMessage = "Error: game is over; no new moves can be made";
+            var errorServerMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, errorMessage, null);
+            connections.returnToSender(gameID, session, errorServerMessage);
+        } else {
+            game.makeMove(chessMove);
+            gameDAO.updateGame(gameID, game);
+            String moveStr = decodeMove(chessMove);
+            var message = String.format("%s moved %s", username, moveStr);
+            var loadServerMessage = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, null, game);
+            var moveServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null);
+            connections.broadcast(gameID, null, loadServerMessage);
+            connections.broadcast(gameID, session, moveServerMessage);
         }
     }
+
+    private void resign(String authToken, int gameID, Session session) throws DataAccessException, IOException {
+        String username = getUserFromAuth(authToken);
+        ChessGame game = getGameFromID(gameID);
+        if (game.getIsOver()) {
+            var errorMessage = "Error: game is already over";
+            var errorServerMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, errorMessage, null);
+            connections.returnToSender(gameID, session, errorServerMessage);
+        } else {
+            game.setIsOver();
+            gameDAO.updateGame(gameID, game);
+            var message = String.format("%s has resigned; the game is over", username);
+            var resignServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null);
+            connections.broadcast(gameID, null, resignServerMessage);
+        }
+    }
+
 }

@@ -11,10 +11,12 @@ import java.util.*;
 public class ChessGame {
     private TeamColor currentTeamColor;
     private ChessBoard currentBoard;
+    private boolean isOver;
     public ChessGame() {
         this.currentTeamColor = TeamColor.WHITE;
         this.currentBoard = new ChessBoard();
         currentBoard.resetBoard();
+        this.isOver = false;
     }
 
     /**
@@ -160,6 +162,10 @@ public class ChessGame {
     public ChessBoard getBoard() {
         return this.currentBoard;
     }
+
+    public boolean getIsOver() { return this.isOver; }
+
+    public void setIsOver() { this.isOver = true; }
 
     @Override
     public boolean equals(Object o) {
