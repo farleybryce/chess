@@ -20,6 +20,7 @@ public class ChessClient {
     private String authToken = null;
     private State state = State.LOGGEDOUT;
     private final ServerFacade server;
+    private ChessGame.TeamColor teamColor = null;
 
     public ChessClient(String serverUrl) {
         server = new ServerFacade(serverUrl);
@@ -62,6 +63,7 @@ public class ChessClient {
                 case "list" -> list();
                 case "play" -> play(params);
                 case "observe" -> observe(params);
+                case "redraw" -> redraw();
                 case "quit" -> quit();
                 default -> help();
             };
@@ -166,7 +168,6 @@ public class ChessClient {
         if (params.length < 2) {
             throw new DataAccessException(400, "Expected: [game number] [white/black]");
         }
-        ChessGame.TeamColor color = null;
         int gameNumber = 0;
         try {
             gameNumber = Integer.parseInt(params[0]);
@@ -175,15 +176,15 @@ public class ChessClient {
         }
         int gameID = getGameID(gameNumber);
         if (Objects.equals(params[1], "white")) {
-            color = ChessGame.TeamColor.WHITE;
+            teamColor = ChessGame.TeamColor.WHITE;
         } else if (Objects.equals(params[1], "black")) {
-            color = ChessGame.TeamColor.BLACK;
+            teamColor = ChessGame.TeamColor.BLACK;
         } else { throw new DataAccessException(400, "Expected: [game number] [white/black]"); }
-        server.joinGame(new JoinRequest(color, gameID), authToken);
+        server.joinGame(new JoinRequest(teamColor, gameID), authToken);
         state = State.PLAYING;
         ChessBoard board = new ChessBoard();
         board.resetBoard();
-        return drawBoard(color, board);
+        return drawBoard(teamColor, board);
     }
 
     private String observe(String ... params) throws DataAccessException {
@@ -203,6 +204,13 @@ public class ChessClient {
         board.resetBoard();
         return drawBoard(ChessGame.TeamColor.WHITE, board);
     };
+
+    private String redraw() throws DataAccessException {
+        if (state != State.PLAYING  && state != State.OBSERVING) {return help();}
+        ChessBoard board = new ChessBoard();
+        board.resetBoard();
+        return drawBoard(teamColor, board);
+    }
 
     private String menu() {
         if (state == State.LOGGEDOUT) {
@@ -227,12 +235,14 @@ public class ChessClient {
             return """
                     Choose one of the options below:
                     - help
+                    - redraw
                     - quit
                     """;
         } else {
             return """
                     Choose one of the options below:
                     - help
+                    - redraw
                     - quit
                     """;
         }
@@ -269,6 +279,7 @@ public class ChessClient {
                     """
                     Type the word that appears in the list.
                     - help (shows this help screen)
+                    - redraw (redraws the board)
                     - quit (returns you to the previous menu)
                     """;
         } else {
@@ -276,6 +287,7 @@ public class ChessClient {
                     """
                     Type the word that appears in the list.
                     - help (shows this help screen)
+                    - redraw (redraws the board)
                     - quit (returns you to the previous menu)
                     """;
         }
