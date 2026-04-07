@@ -51,6 +51,19 @@ public class MemoryGameDAO implements GameDAO {
         gameDataHashMap.put(gameID, updatedGameData);
     }
 
+    public void removePlayer(int gameID, ChessGame.TeamColor color) throws DataAccessException {
+        GameData gameData = gameDataHashMap.get(gameID);
+        GameData updatedGameData;
+        if (color == ChessGame.TeamColor.WHITE) {
+
+            updatedGameData = new GameData(gameID, null, gameData.blackUsername(), gameData.gameName(), gameData.game());
+        } else {
+
+            updatedGameData = new GameData(gameID, gameData.whiteUsername(), null, gameData.gameName(), gameData.game());
+        }
+        gameDataHashMap.put(gameID, updatedGameData);
+    }
+
     public ArrayList<GameData> listGames() {
         return new ArrayList<>(gameDataHashMap.values());
     }

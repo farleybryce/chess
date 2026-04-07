@@ -40,20 +40,20 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     }
 
     @Override
-    public void handleMessage(WsMessageContext ctx) {
+    public void handleMessage(WsMessageContext ctx) throws DataAccessException {
         try {
             UserGameCommand userGameCommand = new Gson().fromJson(ctx.message(), UserGameCommand.class);
             switch (userGameCommand.getCommandType()) {
-                case EXIT -> exit(action.visitorName(), ctx.session);
-                case LEAVE -> leave();
-                case RESIGN -> resign();
+                case LEAVE -> leave(userGameCommand.getAuthToken(), userGameCommand.getGameID(),
+                        userGameCommand.getColor(), ctx.session);
+                case RESIGN -> resign(userGameCommand.getAuthToken(), userGameCommand.getGameID(), ctx.session);
                 case CONNECT -> connect(userGameCommand.getAuthToken(), userGameCommand.getGameID(),
                         userGameCommand.getColor(), ctx.session);
                 case MAKE_MOVE -> move(userGameCommand.getAuthToken(), userGameCommand.getGameID(),
                         userGameCommand.getChessMove(), ctx.session);
             }
-        } catch (IOException | DataAccessException | InvalidMoveException ex) {
-            ex.printStackTrace();
+        } catch (IOException | DataAccessException ex) {
+            throw new DataAccessException(500, ex.getMessage());
         }
     }
 
@@ -108,7 +108,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         connections.returnToSender(gameID, session, loadServerMessage);
     }
 
-    private void move(String authToken, int gameID, ChessMove chessMove, Session session) throws DataAccessException, InvalidMoveException, IOException {
+    private void move(String authToken, int gameID, ChessMove chessMove, Session session) throws DataAccessException, IOException {
         String username = getUserFromAuth(authToken);
         ChessGame game = getGameFromID(gameID);
         if (game.getIsOver()) {
@@ -116,7 +116,13 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
             var errorServerMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, errorMessage, null);
             connections.returnToSender(gameID, session, errorServerMessage);
         } else {
-            game.makeMove(chessMove);
+            try {
+                game.makeMove(chessMove);
+            } catch (InvalidMoveException e) {
+                var errorMessage = "Error: move is invalid";
+                var errorServerMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, errorMessage, null);
+                connections.returnToSender(gameID, session, errorServerMessage);
+            }
             gameDAO.updateGame(gameID, game);
             String moveStr = decodeMove(chessMove);
             var message = String.format("%s moved %s", username, moveStr);
@@ -141,6 +147,14 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
             var resignServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null);
             connections.broadcast(gameID, null, resignServerMessage);
         }
+    }
+
+    private void leave(String authToken, int gameID, ChessGame.TeamColor color, Session session) throws DataAccessException, IOException {
+        String username = getUserFromAuth(authToken);
+        gameDAO.removePlayer(gameID, color);
+        var message = String.format("%s has left the game", username);
+        var leaveServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null);
+        connections.broadcast(gameID, session, leaveServerMessage);
     }
 
 }

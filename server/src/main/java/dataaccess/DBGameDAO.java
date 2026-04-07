@@ -86,6 +86,18 @@ public class DBGameDAO implements GameDAO{
         executeUpdate(statement, game, gameID);
     }
 
+    public void removePlayer(int gameID, ChessGame.TeamColor color) throws DataAccessException {
+        String statement;
+        if (color == ChessGame.TeamColor.WHITE) {
+
+            statement = "UPDATE game SET whiteUsername=? WHERE id=?";
+        } else {
+
+            statement = "UPDATE game SET blackUsername=? WHERE id=?";
+        }
+        executeUpdate(statement, null, gameID);
+    }
+
     public void clear() throws DataAccessException {
         var statement = "TRUNCATE game";
         executeUpdate(statement);
