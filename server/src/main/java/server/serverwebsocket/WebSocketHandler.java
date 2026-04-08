@@ -72,7 +72,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         return gameData.game();
     }
 
-    private String columnToNumber(int num) {
+    private String numberToColumn(int num) {
         switch (num) {
             case 1 -> {return "a";}
             case 2 -> {return "b";}
@@ -91,8 +91,8 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         int startCol = chessMove.getStartPosition().getColumn();
         int endRow = chessMove.getStartPosition().getRow();
         int endCol = chessMove.getStartPosition().getColumn();
-        String startColStr = columnToNumber(startCol);
-        String endColStr = columnToNumber(endCol);
+        String startColStr = numberToColumn(startCol);
+        String endColStr = numberToColumn(endCol);
         return String.format("%s%d%s%d", startColStr, startRow, endColStr, endRow);
     }
 
