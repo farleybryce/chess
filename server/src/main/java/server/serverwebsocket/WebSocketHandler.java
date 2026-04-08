@@ -142,7 +142,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
                 connections.broadcast(gameID, null, checkmateServerMessage);
             } else if (game.isInStalemate(game.getTeamTurn())) {
                 game.setIsOver();
-                message = "Stalemate";
+                message = "Stalemate, the game is over";
                 var stalemateServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null);
                 connections.broadcast(gameID, null, stalemateServerMessage);
             } else if (game.isInCheck(game.getTeamTurn())) {

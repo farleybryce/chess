@@ -87,6 +87,7 @@ public class ChessClient implements MessageHandler {
                 case "observe" -> observe(params);
                 case "redraw" -> redraw();
                 case "move" -> move();
+                case "resign" -> resign();
                 case "quit" -> quit();
                 default -> help();
             };
@@ -297,6 +298,11 @@ public class ChessClient implements MessageHandler {
         return "";
     }
 
+    private String resign() throws DataAccessException {
+        ws.resignGame(authToken, gameID);
+        return "";
+    }
+
     private String menu() {
         if (state == State.LOGGEDOUT) {
             return """
@@ -322,6 +328,7 @@ public class ChessClient implements MessageHandler {
                     - help
                     - redraw
                     - move [e.g. e2e4]
+                    - resign
                     - quit
                     """;
         } else {
