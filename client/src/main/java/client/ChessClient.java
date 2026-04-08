@@ -220,7 +220,7 @@ public class ChessClient implements MessageHandler {
         try {
             gameNumber = Integer.parseInt(params[0]);
         } catch (NumberFormatException ex) {
-            throw new DataAccessException(400, "Expected: [game number] [white/black]");
+            throw new DataAccessException(400, "Expected: [game number]");
         }
         getGameID(gameNumber);
         state = State.OBSERVING;
