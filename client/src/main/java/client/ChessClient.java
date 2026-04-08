@@ -114,13 +114,10 @@ public class ChessClient implements MessageHandler {
     }
 
     private String quit() {
-        if (state == State.LOGGEDIN) {
-            return help();
-        } else if (state == State.LOGGEDOUT) {
+        if (state == State.LOGGEDOUT) {
             return "quit";
         } else {
-            state = State.LOGGEDIN;
-            return "";
+            return help();
         }
     }
 
@@ -355,7 +352,6 @@ public class ChessClient implements MessageHandler {
                     - move [e.g. e2e4]
                     - resign
                     - leave
-                    - quit
                     """;
         } else {
             return """
@@ -363,7 +359,6 @@ public class ChessClient implements MessageHandler {
                     - help
                     - redraw
                     - leave
-                    - quit
                     """;
         }
     }

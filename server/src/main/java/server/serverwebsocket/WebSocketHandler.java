@@ -128,7 +128,6 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
                 var errorServerMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, errorMessage, null);
                 connections.returnToSender(gameID, session, errorServerMessage);
             }
-            gameDAO.updateGame(gameID, game);
             String moveStr = decodeMove(chessMove);
             var message = String.format("%s moved %s", username, moveStr);
             var loadServerMessage = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, null, game);
@@ -150,6 +149,7 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
                 var checkServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null);
                 connections.broadcast(gameID, null, checkServerMessage);
             }
+            gameDAO.updateGame(gameID, game);
         }
     }
 
