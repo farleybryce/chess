@@ -99,9 +99,14 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     private void connect(String authToken, int gameID, ChessGame.TeamColor color, Session session) throws DataAccessException, IOException {
         connections.add(gameID, session);
         String username = getUserFromAuth(authToken);
-        String teamColor = color.toString();
         ChessGame game = getGameFromID(gameID);
-        var message = String.format("%s has connected to the game as %s", username, teamColor);
+        String message;
+        if (color == null) {
+            message = String.format("%s has connected to the game as an observer", username);
+        } else {
+            String teamColor = color.toString();
+            message = String.format("%s has connected to the game as %s", username, teamColor);
+        }
         var connectServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null);
         var loadServerMessage = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, null, game);
         connections.broadcast(gameID, session, connectServerMessage);
@@ -151,10 +156,13 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
 
     private void leave(String authToken, int gameID, ChessGame.TeamColor color, Session session) throws DataAccessException, IOException {
         String username = getUserFromAuth(authToken);
-        gameDAO.removePlayer(gameID, color);
+        if (color != null) {
+            gameDAO.removePlayer(gameID, color);
+        }
         var message = String.format("%s has left the game", username);
         var leaveServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null);
         connections.broadcast(gameID, session, leaveServerMessage);
+        connections.remove(gameID, session);
     }
 
 }
