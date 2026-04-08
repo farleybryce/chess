@@ -43,9 +43,11 @@ public class ChessClient implements MessageHandler {
         var result = "";
         while (!result.equals("quit")) {
             System.out.print(menu());
-            System.out.print(SET_TEXT_COLOR_YELLOW + SET_TEXT_FAINT + SET_TEXT_ITALIC
-                    + "Chess >>> "
-                    + RESET_TEXT_COLOR + RESET_TEXT_ITALIC + RESET_TEXT_BOLD_FAINT);
+            if (state != State.PLAYING  && state != State.OBSERVING) {
+                System.out.print(SET_TEXT_COLOR_YELLOW + SET_TEXT_FAINT + SET_TEXT_ITALIC
+                        + "Chess >>> "
+                        + RESET_TEXT_COLOR + RESET_TEXT_ITALIC + RESET_TEXT_BOLD_FAINT);
+            }
             String line = scanner.nextLine();
 
             try {
@@ -63,11 +65,20 @@ public class ChessClient implements MessageHandler {
         var type = serverMessage.getServerMessageType();
         if (type == ServerMessage.ServerMessageType.LOAD_GAME) {
             game = serverMessage.getGame();
-            redraw();
+            System.out.print("\n" + redraw());
+            System.out.print(SET_TEXT_COLOR_YELLOW + SET_TEXT_FAINT + SET_TEXT_ITALIC
+                    + "Chess >>> "
+                    + RESET_TEXT_COLOR + RESET_TEXT_ITALIC + RESET_TEXT_BOLD_FAINT);
         } else if (type == ServerMessage.ServerMessageType.NOTIFICATION) {
-            System.out.println(SET_TEXT_COLOR_YELLOW + serverMessage.getMessage() + RESET_TEXT_COLOR);
+            System.out.println("\n" + SET_TEXT_COLOR_YELLOW + serverMessage.getMessage() + RESET_TEXT_COLOR);
+            System.out.print(SET_TEXT_COLOR_YELLOW + SET_TEXT_FAINT + SET_TEXT_ITALIC
+                    + "Chess >>> "
+                    + RESET_TEXT_COLOR + RESET_TEXT_ITALIC + RESET_TEXT_BOLD_FAINT);
         } else {
             System.out.println(SET_TEXT_COLOR_RED + serverMessage.getMessage() + RESET_TEXT_COLOR);
+            System.out.print(SET_TEXT_COLOR_YELLOW + SET_TEXT_FAINT + SET_TEXT_ITALIC
+                    + "Chess >>> "
+                    + RESET_TEXT_COLOR + RESET_TEXT_ITALIC + RESET_TEXT_BOLD_FAINT);
         }
     }
 
@@ -86,7 +97,7 @@ public class ChessClient implements MessageHandler {
                 case "play" -> play(params);
                 case "observe" -> observe(params);
                 case "redraw" -> redraw();
-                case "move" -> move();
+                case "move" -> move(params);
                 case "resign" -> resign();
                 case "leave" -> leave();
                 case "quit" -> quit();
@@ -270,6 +281,9 @@ public class ChessClient implements MessageHandler {
         }
         if (teamColor != game.getTeamTurn()) { return SET_TEXT_COLOR_RED + "Error: It is not your turn"; }
         ChessMove chessMove = encodeMove(params[0]);
+        if (game.getBoard().getPiece(chessMove.getStartPosition()) == null) {
+            return SET_TEXT_COLOR_RED +"Error: move is invalid";
+        }
         if (Objects.equals(game.getBoard().getPiece(chessMove.getStartPosition()).getPieceType(), ChessPiece.PieceType.PAWN) &&
                 ((teamColor == ChessGame.TeamColor.WHITE && chessMove.getEndPosition().getRow() == 8) ||
                 (teamColor == ChessGame.TeamColor.BLACK && chessMove.getEndPosition().getRow() == 1))) {

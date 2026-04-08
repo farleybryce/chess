@@ -89,8 +89,8 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     private String decodeMove(ChessMove chessMove) {
         int startRow = chessMove.getStartPosition().getRow();
         int startCol = chessMove.getStartPosition().getColumn();
-        int endRow = chessMove.getStartPosition().getRow();
-        int endCol = chessMove.getStartPosition().getColumn();
+        int endRow = chessMove.getEndPosition().getRow();
+        int endCol = chessMove.getEndPosition().getColumn();
         String startColStr = numberToColumn(startCol);
         String endColStr = numberToColumn(endCol);
         return String.format("%s%d%s%d", startColStr, startRow, endColStr, endRow);
