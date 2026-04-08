@@ -330,7 +330,18 @@ public class ChessClient implements MessageHandler {
     }
 
     private String resign() throws DataAccessException {
-        ws.resignGame(authToken, gameID);
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("""
+                    Are you sure you want to resign?
+                    - yes
+                    - no
+                    (default answer is no)
+                    """);
+        printPrompt();
+        String line = scanner.nextLine();
+        if (Objects.equals(line, "yes")) {
+            ws.resignGame(authToken, gameID);
+        }
         return "";
     }
 
