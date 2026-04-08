@@ -1,4 +1,4 @@
-package sharedwebsocket.messages;
+package websocket.messages;
 
 import chess.ChessGame;
 
@@ -14,6 +14,7 @@ public class ServerMessage {
     ServerMessageType serverMessageType;
     String message;
     ChessGame game;
+    String errorMessage;
 
     public enum ServerMessageType {
         LOAD_GAME,
@@ -21,10 +22,11 @@ public class ServerMessage {
         NOTIFICATION
     }
 
-    public ServerMessage(ServerMessageType type, String message, ChessGame game) {
+    public ServerMessage(ServerMessageType type, String message, ChessGame game, String errorMessage) {
         this.serverMessageType = type;
         this.message = message;
         this.game = game;
+        this.errorMessage = errorMessage;
     }
 
     public ServerMessageType getServerMessageType() {
@@ -34,6 +36,8 @@ public class ServerMessage {
     public String getMessage() { return this.message; }
 
     public ChessGame getGame() { return this.game; }
+
+    public String getErrorMessage() { return errorMessage; }
 
     @Override
     public boolean equals(Object o) {

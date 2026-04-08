@@ -5,7 +5,7 @@ import clientwebsocket.MessageHandler;
 import clientwebsocket.WebSocketFacade;
 import com.google.gson.*;
 import facade.*;
-import sharedwebsocket.messages.ServerMessage;
+import websocket.messages.ServerMessage;
 
 
 import java.util.ArrayList;
@@ -75,7 +75,7 @@ public class ChessClient implements MessageHandler {
                     + "Chess >>> "
                     + RESET_TEXT_COLOR + RESET_TEXT_ITALIC + RESET_TEXT_BOLD_FAINT);
         } else {
-            System.out.println(SET_TEXT_COLOR_RED + serverMessage.getMessage() + RESET_TEXT_COLOR);
+            System.out.println(SET_TEXT_COLOR_RED + serverMessage.getErrorMessage() + RESET_TEXT_COLOR);
             System.out.print(SET_TEXT_COLOR_YELLOW + SET_TEXT_FAINT + SET_TEXT_ITALIC
                     + "Chess >>> "
                     + RESET_TEXT_COLOR + RESET_TEXT_ITALIC + RESET_TEXT_BOLD_FAINT);
@@ -215,7 +215,7 @@ public class ChessClient implements MessageHandler {
         } else { throw new DataAccessException(400, "Expected: [game number] [white/black]"); }
         server.joinGame(new JoinRequest(teamColor, gameID), authToken);
         state = State.PLAYING;
-        ws.connect(authToken, gameID, teamColor);
+        ws.connect(authToken, gameID);
         return SET_TEXT_COLOR_GREEN + "Successfully joined game as player";
     }
 
@@ -233,7 +233,7 @@ public class ChessClient implements MessageHandler {
         getGameID(gameNumber);
         state = State.OBSERVING;
         teamColor = ChessGame.TeamColor.WHITE;
-        ws.connect(authToken, gameID, null);
+        ws.connect(authToken, gameID);
         return SET_TEXT_COLOR_GREEN + "Successfully joined game as observer";
     };
 
@@ -318,7 +318,7 @@ public class ChessClient implements MessageHandler {
 
     private String leave() throws DataAccessException {
         state = State.LOGGEDIN;
-        ws.leaveGame(authToken, gameID, teamColor);
+        ws.leaveGame(authToken, gameID);
         game = null;
         gameID = -1;
         teamColor = null;

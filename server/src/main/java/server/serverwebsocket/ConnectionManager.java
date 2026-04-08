@@ -2,7 +2,7 @@ package server.serverwebsocket;
 
 import com.google.gson.Gson;
 import org.eclipse.jetty.websocket.api.Session;
-import sharedwebsocket.messages.ServerMessage;
+import websocket.messages.ServerMessage;
 
 import java.io.IOException;
 import java.util.Set;

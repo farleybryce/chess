@@ -1,6 +1,5 @@
-package sharedwebsocket.commands;
+package websocket.commands;
 
-import chess.ChessGame;
 import chess.ChessMove;
 
 import java.util.Objects;

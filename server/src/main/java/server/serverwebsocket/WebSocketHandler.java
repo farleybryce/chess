@@ -16,11 +16,11 @@ import io.javalin.websocket.WsMessageHandler;
 import model.AuthData;
 import model.GameData;
 import org.eclipse.jetty.websocket.api.Session;
-import server.Server;
-import sharedwebsocket.commands.UserGameCommand;
-import sharedwebsocket.messages.ServerMessage;
+import websocket.commands.UserGameCommand;
+import websocket.messages.ServerMessage;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsCloseHandler {
 
@@ -44,11 +44,9 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         try {
             UserGameCommand userGameCommand = new Gson().fromJson(ctx.message(), UserGameCommand.class);
             switch (userGameCommand.getCommandType()) {
-                case LEAVE -> leave(userGameCommand.getAuthToken(), userGameCommand.getGameID(),
-                        userGameCommand.getColor(), ctx.session);
+                case LEAVE -> leave(userGameCommand.getAuthToken(), userGameCommand.getGameID(), ctx.session);
                 case RESIGN -> resign(userGameCommand.getAuthToken(), userGameCommand.getGameID(), ctx.session);
-                case CONNECT -> connect(userGameCommand.getAuthToken(), userGameCommand.getGameID(),
-                        userGameCommand.getColor(), ctx.session);
+                case CONNECT -> connect(userGameCommand.getAuthToken(), userGameCommand.getGameID(), ctx.session);
                 case MAKE_MOVE -> move(userGameCommand.getAuthToken(), userGameCommand.getGameID(),
                         userGameCommand.getChessMove(), ctx.session);
             }
@@ -70,6 +68,14 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     private ChessGame getGameFromID(int gameID) throws DataAccessException {
         GameData gameData = gameDAO.getGame(gameID);
         return gameData.game();
+    }
+
+    private ChessGame.TeamColor getColor(String authToken, int gameID) throws DataAccessException {
+        String username = getUserFromAuth(authToken);
+        GameData gameData = gameDAO.getGame(gameID);
+        if (Objects.equals(gameData.whiteUsername(), username)) { return ChessGame.TeamColor.WHITE; }
+        else if (Objects.equals(gameData.blackUsername(), username)) { return ChessGame.TeamColor.BLACK; }
+        else { return null; }
     }
 
     private String numberToColumn(int num) {
@@ -96,57 +102,83 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
         return String.format("%s%d%s%d", startColStr, startRow, endColStr, endRow);
     }
 
-    private void connect(String authToken, int gameID, ChessGame.TeamColor color, Session session) throws DataAccessException, IOException {
+    private void connect(String authToken, int gameID, Session session) throws DataAccessException, IOException {
         connections.add(gameID, session);
-        String username = getUserFromAuth(authToken);
-        ChessGame game = getGameFromID(gameID);
-        String message;
-        if (color == null) {
-            message = String.format("%s has connected to the game as an observer", username);
-        } else {
-            String teamColor = color.toString();
-            message = String.format("%s has connected to the game as %s", username, teamColor);
+        try {
+            String username = getUserFromAuth(authToken);
+            ChessGame game = getGameFromID(gameID);
+            ChessGame.TeamColor color = getColor(authToken, gameID);
+            String message;
+            if (color == null) {
+                message = String.format("%s has connected to the game as an observer", username);
+            } else {
+                String teamColor = color.toString();
+                message = String.format("%s has connected to the game as %s", username, teamColor);
+            }
+            var connectServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null, null);
+            var loadServerMessage = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, null, game, null);
+            connections.broadcast(gameID, session, connectServerMessage);
+            connections.returnToSender(gameID, session, loadServerMessage);
+        } catch (DataAccessException e) {
+            var errorMessage = "Error: Invalid input";
+            var errorServerMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, null, errorMessage);
+            connections.returnToSender(gameID, session, errorServerMessage);
         }
-        var connectServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null);
-        var loadServerMessage = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, null, game);
-        connections.broadcast(gameID, session, connectServerMessage);
-        connections.returnToSender(gameID, session, loadServerMessage);
+
     }
 
     private void move(String authToken, int gameID, ChessMove chessMove, Session session) throws DataAccessException, IOException {
-        String username = getUserFromAuth(authToken);
+        String username = "";
+        try {
+            username = getUserFromAuth(authToken);
+        } catch (DataAccessException e) {
+            var errorMessage = "Error: invalid authToken";
+            var errorServerMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, null, errorMessage);
+            connections.returnToSender(gameID, session, errorServerMessage);
+            return;
+        }
         ChessGame game = getGameFromID(gameID);
-        if (game.getIsOver()) {
+        ChessGame.TeamColor color = getColor(authToken, gameID);
+        if (color == null) {
+            var errorMessage = "Error: observer cannot resign";
+            var errorServerMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, null, errorMessage);
+            connections.returnToSender(gameID, session, errorServerMessage);
+        } else if (game.getIsOver()) {
             var errorMessage = "Error: game is over; no new moves can be made";
-            var errorServerMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, errorMessage, null);
+            var errorServerMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, null, errorMessage);
+            connections.returnToSender(gameID, session, errorServerMessage);
+        } else if (color != game.getTeamTurn()) {
+            var errorMessage = "Error: it is not your turn";
+            var errorServerMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, null, errorMessage);
             connections.returnToSender(gameID, session, errorServerMessage);
         } else {
             try {
                 game.makeMove(chessMove);
             } catch (InvalidMoveException e) {
                 var errorMessage = "Error: move is invalid";
-                var errorServerMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, errorMessage, null);
+                var errorServerMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, null, errorMessage);
                 connections.returnToSender(gameID, session, errorServerMessage);
+                return;
             }
             String moveStr = decodeMove(chessMove);
             var message = String.format("%s moved %s", username, moveStr);
-            var loadServerMessage = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, null, game);
-            var moveServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null);
+            var loadServerMessage = new ServerMessage(ServerMessage.ServerMessageType.LOAD_GAME, null, game, null);
+            var moveServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null, null);
             connections.broadcast(gameID, null, loadServerMessage);
             connections.broadcast(gameID, session, moveServerMessage);
             if (game.isInCheckmate(game.getTeamTurn())) {
                 game.setIsOver();
                 message = String.format("Checkmate, %s has won", username);
-                var checkmateServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null);
+                var checkmateServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null, null);
                 connections.broadcast(gameID, null, checkmateServerMessage);
             } else if (game.isInStalemate(game.getTeamTurn())) {
                 game.setIsOver();
                 message = "Stalemate, the game is over";
-                var stalemateServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null);
+                var stalemateServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null, null);
                 connections.broadcast(gameID, null, stalemateServerMessage);
             } else if (game.isInCheck(game.getTeamTurn())) {
                 message = String.format("Check by %s", username);
-                var checkServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null);
+                var checkServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null, null);
                 connections.broadcast(gameID, null, checkServerMessage);
             }
             gameDAO.updateGame(gameID, game);
@@ -156,26 +188,34 @@ public class WebSocketHandler implements WsConnectHandler, WsMessageHandler, WsC
     private void resign(String authToken, int gameID, Session session) throws DataAccessException, IOException {
         String username = getUserFromAuth(authToken);
         ChessGame game = getGameFromID(gameID);
-        if (game.getIsOver()) {
-            var errorMessage = "Error: game is already over";
-            var errorServerMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, errorMessage, null);
+        ChessGame.TeamColor color = getColor(authToken, gameID);
+        if (color == null) {
+            var errorMessage = "Error: observer cannot resign";
+            var errorServerMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, null, errorMessage);
             connections.returnToSender(gameID, session, errorServerMessage);
         } else {
-            game.setIsOver();
-            gameDAO.updateGame(gameID, game);
-            var message = String.format("%s has resigned; the game is over", username);
-            var resignServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null);
-            connections.broadcast(gameID, null, resignServerMessage);
+            if (game.getIsOver()) {
+                var errorMessage = "Error: game is already over";
+                var errorServerMessage = new ServerMessage(ServerMessage.ServerMessageType.ERROR, null, null, errorMessage);
+                connections.returnToSender(gameID, session, errorServerMessage);
+            } else {
+                game.setIsOver();
+                gameDAO.updateGame(gameID, game);
+                var message = String.format("%s has resigned; the game is over", username);
+                var resignServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null, null);
+                connections.broadcast(gameID, null, resignServerMessage);
+            }
         }
     }
 
-    private void leave(String authToken, int gameID, ChessGame.TeamColor color, Session session) throws DataAccessException, IOException {
+    private void leave(String authToken, int gameID, Session session) throws DataAccessException, IOException {
         String username = getUserFromAuth(authToken);
+        ChessGame.TeamColor color = getColor(authToken, gameID);
         if (color != null) {
             gameDAO.removePlayer(gameID, color);
         }
         var message = String.format("%s has left the game", username);
-        var leaveServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null);
+        var leaveServerMessage = new ServerMessage(ServerMessage.ServerMessageType.NOTIFICATION, message, null, null);
         connections.broadcast(gameID, session, leaveServerMessage);
         connections.remove(gameID, session);
     }
