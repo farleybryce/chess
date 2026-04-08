@@ -5,6 +5,8 @@ import chess.ChessGame;
 import chess.ChessPiece;
 import chess.ChessPosition;
 
+import java.util.Collection;
+
 import static ui.EscapeSequences.*;
 
 
@@ -25,13 +27,17 @@ public class DrawBoard {
                 + " " + String.valueOf(rowNumber) + " ";
     }
 
-    private static String drawSquare(ChessGame.TeamColor squareColor, ChessGame.TeamColor pieceColor, ChessPiece piece) {
+    private static String drawSquare(ChessGame.TeamColor squareColor, ChessGame.TeamColor pieceColor, ChessPiece piece, boolean highlight) {
         String setSquareColor = SET_BG_COLOR_TAN;
         String setPieceColor = SET_TEXT_COLOR_BLACK;
         String setPieceLetter;
 
         if (squareColor == ChessGame.TeamColor.BLACK) { setSquareColor = SET_BG_COLOR_DARK_GREEN; }
         if (pieceColor == ChessGame.TeamColor.WHITE) { setPieceColor = SET_TEXT_COLOR_WHITE; }
+        if (highlight) {
+            if (setSquareColor.equals(SET_BG_COLOR_TAN)) { setSquareColor = SET_BG_COLOR_YELLOW; }
+            else { setSquareColor = SET_BG_COLOR_GREEN; }
+        }
         if (piece == null) {
             setPieceLetter = " ";
         } else {
@@ -55,7 +61,7 @@ public class DrawBoard {
         if ((row + col) % 2 == 0) { color = ChessGame.TeamColor.BLACK; }
         return color;
     }
-    private static String drawPieceSquares(int i, int j, ChessBoard board, ChessGame.TeamColor teamColor) {
+    private static String drawPieceSquares(int i, int j, ChessBoard board, ChessGame.TeamColor teamColor, boolean highlight) {
         String pieceSquaresString = "";
 
         ChessPiece piece = board.getPiece(new ChessPosition(i, j));
@@ -66,19 +72,27 @@ public class DrawBoard {
         } else {
             pieceColor = ChessGame.TeamColor.BLACK;
         }
-        pieceSquaresString += drawSquare(squareColor, pieceColor, piece);
+        pieceSquaresString += drawSquare(squareColor, pieceColor, piece, highlight);
 
         return pieceSquaresString;
     }
 
-    public static String drawBoard(ChessGame.TeamColor teamColor, ChessBoard board) {
+    public static String drawBoard(ChessGame.TeamColor teamColor, ChessBoard board, Collection<ChessPosition> highlights) {
         String boardString = "";
         boardString += drawLetterRow(teamColor) + "\n";
+        boolean highlightSquare = false;
         if (teamColor == ChessGame.TeamColor.WHITE) {
             for (int i=8; i>0; i--) {
                 boardString += drawNumberRowSquare(i) + RESET_BG_COLOR;
                 for (int j = 1; j < 9; j++) {
-                    boardString += drawPieceSquares(i, j, board, teamColor);
+                    if (highlights != null) {
+                        ChessPosition position = new ChessPosition(i, j);
+                        if (highlights.contains(position)) {
+                            highlightSquare = true;
+                        }
+                    }
+                    boardString += drawPieceSquares(i, j, board, teamColor, highlightSquare);
+                    highlightSquare = false;
                 }
                 boardString += drawNumberRowSquare(i) + RESET_BG_COLOR + "\n";
             }
@@ -86,7 +100,14 @@ public class DrawBoard {
             for (int i=1; i<9; i++) {
                 boardString += drawNumberRowSquare(i) + RESET_BG_COLOR;
                 for (int j = 8; j > 0; j--) {
-                    boardString += drawPieceSquares(i, j, board, teamColor);
+                    if (highlights != null) {
+                        ChessPosition position = new ChessPosition(i, j);
+                        if (highlights.contains(position)) {
+                            highlightSquare = true;
+                        }
+                    }
+                    boardString += drawPieceSquares(i, j, board, teamColor, highlightSquare);
+                    highlightSquare = false;
                 }
                 boardString += drawNumberRowSquare(i) + RESET_BG_COLOR + "\n";
             }

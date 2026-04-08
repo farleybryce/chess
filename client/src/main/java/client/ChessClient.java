@@ -8,10 +8,7 @@ import facade.*;
 import websocket.messages.ServerMessage;
 
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Scanner;
+import java.util.*;
 
 import static client.DrawBoard.drawBoard;
 import static ui.EscapeSequences.*;
@@ -43,11 +40,7 @@ public class ChessClient implements MessageHandler {
         var result = "";
         while (!result.equals("quit")) {
             System.out.print(menu());
-            if (state != State.PLAYING  && state != State.OBSERVING) {
-                System.out.print(SET_TEXT_COLOR_YELLOW + SET_TEXT_FAINT + SET_TEXT_ITALIC
-                        + "Chess >>> "
-                        + RESET_TEXT_COLOR + RESET_TEXT_ITALIC + RESET_TEXT_BOLD_FAINT);
-            }
+            printPrompt();
             String line = scanner.nextLine();
 
             try {
@@ -61,25 +54,23 @@ public class ChessClient implements MessageHandler {
         System.out.println();
     }
 
+    private void printPrompt() {
+        System.out.print(SET_TEXT_COLOR_YELLOW + SET_TEXT_FAINT + SET_TEXT_ITALIC
+                + "Chess >>> "
+                + RESET_TEXT_COLOR + RESET_TEXT_ITALIC + RESET_TEXT_BOLD_FAINT);
+    }
+
     public void notify(ServerMessage serverMessage) {
         var type = serverMessage.getServerMessageType();
         if (type == ServerMessage.ServerMessageType.LOAD_GAME) {
             game = serverMessage.getGame();
             System.out.print("\n" + redraw());
-            System.out.print(SET_TEXT_COLOR_YELLOW + SET_TEXT_FAINT + SET_TEXT_ITALIC
-                    + "Chess >>> "
-                    + RESET_TEXT_COLOR + RESET_TEXT_ITALIC + RESET_TEXT_BOLD_FAINT);
         } else if (type == ServerMessage.ServerMessageType.NOTIFICATION) {
-            System.out.println("\n" + SET_TEXT_COLOR_YELLOW + serverMessage.getMessage() + RESET_TEXT_COLOR);
-            System.out.print(SET_TEXT_COLOR_YELLOW + SET_TEXT_FAINT + SET_TEXT_ITALIC
-                    + "Chess >>> "
-                    + RESET_TEXT_COLOR + RESET_TEXT_ITALIC + RESET_TEXT_BOLD_FAINT);
+            System.out.println("\n" + SET_TEXT_COLOR_MAGENTA + serverMessage.getMessage() + RESET_TEXT_COLOR);
         } else {
             System.out.println(SET_TEXT_COLOR_RED + serverMessage.getErrorMessage() + RESET_TEXT_COLOR);
-            System.out.print(SET_TEXT_COLOR_YELLOW + SET_TEXT_FAINT + SET_TEXT_ITALIC
-                    + "Chess >>> "
-                    + RESET_TEXT_COLOR + RESET_TEXT_ITALIC + RESET_TEXT_BOLD_FAINT);
         }
+        printPrompt();
     }
 
     public String eval(String input) {
@@ -98,6 +89,7 @@ public class ChessClient implements MessageHandler {
                 case "observe" -> observe(params);
                 case "redraw" -> redraw();
                 case "move" -> move(params);
+                case "highlight" -> highlight(params);
                 case "resign" -> resign();
                 case "leave" -> leave();
                 case "quit" -> quit();
@@ -239,7 +231,7 @@ public class ChessClient implements MessageHandler {
 
     private String redraw() {
         if (state != State.PLAYING  && state != State.OBSERVING) {return help();}
-        return drawBoard(teamColor, game.getBoard());
+        return drawBoard(teamColor, game.getBoard(), null);
     }
 
     private int columnToNumber(char row) throws DataAccessException {
@@ -252,8 +244,19 @@ public class ChessClient implements MessageHandler {
             case 'f' -> {return 6;}
             case 'g' -> {return 7;}
             case 'h' -> {return 8;}
-            default -> {throw new DataAccessException(400, "Expected: [move e.g. e2e4]");}
+            default -> {throw new DataAccessException(400, "Invalid column letter");}
         }
+    }
+
+    private ChessPosition encodeSquare(String squareString) throws DataAccessException {
+        char colChar = squareString.charAt(0);
+        char rowChar = squareString.charAt(1);
+        int col = columnToNumber(colChar);
+        int row = Character.getNumericValue(rowChar);
+        if (row < 0 || row > 8) {
+            throw new DataAccessException(400, "Invalid row number");
+        }
+        return new ChessPosition(row, col);
     }
 
     private ChessMove encodeMove(String moveString) throws DataAccessException {
@@ -266,7 +269,7 @@ public class ChessClient implements MessageHandler {
         int endCol = columnToNumber(endColChar);
         int endRow = Character.getNumericValue(endRowChar);
         if (startRow < 0 || startRow > 8 || endRow < 0 || endRow > 8) {
-            throw new DataAccessException(400, "Expected: [move e.g. e2e4]");
+            throw new DataAccessException(400, "Invalid row number");
         }
         return new ChessMove(new ChessPosition(startRow, startCol), new ChessPosition(endRow, endCol), null);
     }
@@ -276,7 +279,6 @@ public class ChessClient implements MessageHandler {
         if (params.length < 1) {
             throw new DataAccessException(400, "Expected: [move e.g. e2e4]");
         }
-        if (teamColor != game.getTeamTurn()) { return SET_TEXT_COLOR_RED + "Error: It is not your turn"; }
         ChessMove chessMove = encodeMove(params[0]);
         if (game.getBoard().getPiece(chessMove.getStartPosition()) == null) {
             return SET_TEXT_COLOR_RED +"Error: move is invalid";
@@ -294,9 +296,7 @@ public class ChessClient implements MessageHandler {
                     (input not matching one of these will default to queen)
                     
                     """);
-            System.out.print(SET_TEXT_COLOR_YELLOW + SET_TEXT_FAINT + SET_TEXT_ITALIC
-                    + "Chess >>> "
-                    + RESET_TEXT_COLOR + RESET_TEXT_ITALIC + RESET_TEXT_BOLD_FAINT);
+            printPrompt();
             String line = scanner.nextLine();
             ChessPiece promotionPiece;
             switch (line) {
@@ -309,6 +309,24 @@ public class ChessClient implements MessageHandler {
         }
         ws.makeMove(authToken, gameID, chessMove);
         return "";
+    }
+
+    private String highlight(String ... params) throws DataAccessException {
+        if (state != State.PLAYING  && state != State.OBSERVING) {return help();}
+        if (params.length < 1) {
+            throw new DataAccessException(400, "Expected: [e.g. e2]");
+        }
+        ChessPosition position = encodeSquare(params[0]);
+        if (game.getBoard().getPiece(position) == null) {
+            return SET_TEXT_COLOR_RED + "Error: Square is empty";
+        }
+        var validMoves = game.validMoves(position);
+        Collection<ChessPosition> validPositions = new ArrayList<>();
+        for (ChessMove move : validMoves) {
+            validPositions.add(move.getEndPosition());
+        }
+        validPositions.add(position);
+        return drawBoard(teamColor, game.getBoard(), validPositions);
     }
 
     private String resign() throws DataAccessException {
@@ -350,6 +368,7 @@ public class ChessClient implements MessageHandler {
                     - help
                     - redraw
                     - move [e.g. e2e4]
+                    - highlight [e.g. e2]
                     - resign
                     - leave
                     """;
@@ -358,6 +377,7 @@ public class ChessClient implements MessageHandler {
                     Choose one of the options below:
                     - help
                     - redraw
+                    - highlight [e.g. e2]
                     - leave
                     """;
         }
@@ -399,9 +419,11 @@ public class ChessClient implements MessageHandler {
                       (moves your piece, enter the column and row
                       the piece is currently on followed by the
                       column and row you are moving it to.)
+                    - highlight [e.g. e2]
+                      (highlights the legal moves for the piece
+                      at the given position)
                     - resign (concedes the game to your opponent)
                     - leave (exits the current game)
-                    - quit (returns you to the previous menu)
                     """;
         } else {
             return SET_TEXT_COLOR_BLUE +
@@ -409,8 +431,10 @@ public class ChessClient implements MessageHandler {
                     Type the word that appears in the list.
                     - help (shows this help screen)
                     - redraw (redraws the board)
+                    - highlight [e.g. e2]
+                      (highlights the legal moves for the piece
+                      at the given position)
                     - leave (exits the current game)
-                    - quit (returns you to the previous menu)
                     """;
         }
     }
