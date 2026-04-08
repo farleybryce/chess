@@ -2,8 +2,10 @@ package client;
 
 import chess.ChessBoard;
 import chess.ChessGame;
+import clientwebsocket.MessageHandler;
 import com.google.gson.*;
 import facade.*;
+import sharedwebsocket.messages.ServerMessage;
 
 
 import java.util.ArrayList;
@@ -14,13 +16,14 @@ import java.util.Scanner;
 import static client.DrawBoard.drawBoard;
 import static ui.EscapeSequences.*;
 
-public class ChessClient {
+public class ChessClient implements MessageHandler {
 
     private String username = null;
     private String authToken = null;
     private State state = State.LOGGEDOUT;
     private final ServerFacade server;
     private ChessGame.TeamColor teamColor = null;
+    private ChessGame game = null;
 
     public ChessClient(String serverUrl) {
         server = new ServerFacade(serverUrl);
@@ -47,6 +50,18 @@ public class ChessClient {
             }
         }
         System.out.println();
+    }
+
+    public void notify(ServerMessage serverMessage) {
+        var type = serverMessage.getServerMessageType();
+        if (type == ServerMessage.ServerMessageType.LOAD_GAME) {
+            game = serverMessage.getGame();
+            redraw();
+        } else if (type == ServerMessage.ServerMessageType.NOTIFICATION) {
+            System.out.println(SET_TEXT_COLOR_YELLOW + serverMessage.getMessage() + RESET_TEXT_COLOR);
+        } else {
+            System.out.println(SET_TEXT_COLOR_RED + serverMessage.getMessage() + RESET_TEXT_COLOR);
+        }
     }
 
     public String eval(String input) {
@@ -205,11 +220,9 @@ public class ChessClient {
         return drawBoard(ChessGame.TeamColor.WHITE, board);
     };
 
-    private String redraw() throws DataAccessException {
+    private String redraw() {
         if (state != State.PLAYING  && state != State.OBSERVING) {return help();}
-        ChessBoard board = new ChessBoard();
-        board.resetBoard();
-        return drawBoard(teamColor, board);
+        return drawBoard(teamColor, game.getBoard());
     }
 
     private String menu() {
