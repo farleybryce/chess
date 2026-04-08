@@ -77,22 +77,28 @@ public class DrawBoard {
         return pieceSquaresString;
     }
 
+    private static String checkDrawHighlights(String boardString, Collection<ChessPosition> highlights,
+                                       int i, int j, ChessBoard board, ChessGame.TeamColor teamColor) {
+        boolean highlightSquare = false;
+        if (highlights != null) {
+            ChessPosition position = new ChessPosition(i, j);
+            if (highlights.contains(position)) {
+                highlightSquare = true;
+            }
+        }
+        return drawPieceSquares(i, j, board, teamColor, highlightSquare);
+
+
+    }
+
     public static String drawBoard(ChessGame.TeamColor teamColor, ChessBoard board, Collection<ChessPosition> highlights) {
         String boardString = "";
         boardString += drawLetterRow(teamColor) + "\n";
-        boolean highlightSquare = false;
         if (teamColor == ChessGame.TeamColor.WHITE) {
             for (int i=8; i>0; i--) {
                 boardString += drawNumberRowSquare(i) + RESET_BG_COLOR;
                 for (int j = 1; j < 9; j++) {
-                    if (highlights != null) {
-                        ChessPosition position = new ChessPosition(i, j);
-                        if (highlights.contains(position)) {
-                            highlightSquare = true;
-                        }
-                    }
-                    boardString += drawPieceSquares(i, j, board, teamColor, highlightSquare);
-                    highlightSquare = false;
+                    boardString += checkDrawHighlights(boardString, highlights, i, j, board, teamColor);
                 }
                 boardString += drawNumberRowSquare(i) + RESET_BG_COLOR + "\n";
             }
@@ -100,14 +106,7 @@ public class DrawBoard {
             for (int i=1; i<9; i++) {
                 boardString += drawNumberRowSquare(i) + RESET_BG_COLOR;
                 for (int j = 8; j > 0; j--) {
-                    if (highlights != null) {
-                        ChessPosition position = new ChessPosition(i, j);
-                        if (highlights.contains(position)) {
-                            highlightSquare = true;
-                        }
-                    }
-                    boardString += drawPieceSquares(i, j, board, teamColor, highlightSquare);
-                    highlightSquare = false;
+                    boardString += checkDrawHighlights(boardString, highlights, i, j, board, teamColor);
                 }
                 boardString += drawNumberRowSquare(i) + RESET_BG_COLOR + "\n";
             }
