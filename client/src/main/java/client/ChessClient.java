@@ -386,6 +386,12 @@ public class ChessClient implements MessageHandler {
                     Type the word that appears in the list.
                     - help (shows this help screen)
                     - redraw (redraws the board)
+                    - move [e.g. e2e4]
+                      (moves your piece, enter the column and row
+                      the piece is currently on followed by the
+                      column and row you are moving it to.)
+                    - resign (concedes the game to your opponent)
+                    - leave (exits the current game)
                     - quit (returns you to the previous menu)
                     """;
         } else {
@@ -394,6 +400,7 @@ public class ChessClient implements MessageHandler {
                     Type the word that appears in the list.
                     - help (shows this help screen)
                     - redraw (redraws the board)
+                    - leave (exits the current game)
                     - quit (returns you to the previous menu)
                     """;
         }
