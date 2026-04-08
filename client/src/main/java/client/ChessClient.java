@@ -88,6 +88,7 @@ public class ChessClient implements MessageHandler {
                 case "redraw" -> redraw();
                 case "move" -> move();
                 case "resign" -> resign();
+                case "leave" -> leave();
                 case "quit" -> quit();
                 default -> help();
             };
@@ -275,11 +276,12 @@ public class ChessClient implements MessageHandler {
             Scanner scanner = new Scanner(System.in);
             System.out.print("""
                     Choose promotion piece by typing one of the following:
-                    queen
-                    rook
-                    knight
-                    bishop
+                    - queen
+                    - rook
+                    - knight
+                    - bishop
                     (input not matching one of these will default to queen)
+                    
                     """);
             System.out.print(SET_TEXT_COLOR_YELLOW + SET_TEXT_FAINT + SET_TEXT_ITALIC
                     + "Chess >>> "
@@ -301,6 +303,15 @@ public class ChessClient implements MessageHandler {
     private String resign() throws DataAccessException {
         ws.resignGame(authToken, gameID);
         return "";
+    }
+
+    private String leave() throws DataAccessException {
+        state = State.LOGGEDIN;
+        ws.leaveGame(authToken, gameID, teamColor);
+        game = null;
+        gameID = -1;
+        teamColor = null;
+        return SET_TEXT_COLOR_GREEN + "Successfully left game";
     }
 
     private String menu() {
@@ -329,6 +340,7 @@ public class ChessClient implements MessageHandler {
                     - redraw
                     - move [e.g. e2e4]
                     - resign
+                    - leave
                     - quit
                     """;
         } else {
@@ -336,6 +348,7 @@ public class ChessClient implements MessageHandler {
                     Choose one of the options below:
                     - help
                     - redraw
+                    - leave
                     - quit
                     """;
         }
