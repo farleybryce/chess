@@ -1,8 +1,8 @@
 package client;
 
-import chess.ChessBoard;
-import chess.ChessGame;
+import chess.*;
 import clientwebsocket.MessageHandler;
+import clientwebsocket.WebSocketFacade;
 import com.google.gson.*;
 import facade.*;
 import sharedwebsocket.messages.ServerMessage;
@@ -22,11 +22,18 @@ public class ChessClient implements MessageHandler {
     private String authToken = null;
     private State state = State.LOGGEDOUT;
     private final ServerFacade server;
+    private final WebSocketFacade ws;
     private ChessGame.TeamColor teamColor = null;
     private ChessGame game = null;
+    private int gameID;
 
     public ChessClient(String serverUrl) {
         server = new ServerFacade(serverUrl);
+        try {
+            ws = new WebSocketFacade(serverUrl, this);
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void run() {
@@ -79,6 +86,7 @@ public class ChessClient implements MessageHandler {
                 case "play" -> play(params);
                 case "observe" -> observe(params);
                 case "redraw" -> redraw();
+                case "move" -> move();
                 case "quit" -> quit();
                 default -> help();
             };
@@ -168,14 +176,14 @@ public class ChessClient implements MessageHandler {
         return gameList;
     }
 
-    private int getGameID(int gameNumber) throws DataAccessException {
+    private void getGameID(int gameNumber) throws DataAccessException {
         ListResult listResult = server.listGames(authToken);
         ArrayList<ListEntry> listEntryArrayList = listResult.games();
         if (gameNumber < 1 || gameNumber > listEntryArrayList.size()) {
             throw new DataAccessException(400, "Error: give a valid game number");
         }
         ListEntry listEntry = listEntryArrayList.get(gameNumber - 1);
-        return listEntry.gameID();
+        gameID = listEntry.gameID();
     }
 
     private String play(String... params) throws DataAccessException {
@@ -189,7 +197,7 @@ public class ChessClient implements MessageHandler {
         } catch (NumberFormatException ex) {
             throw new DataAccessException(400, "Expected: [game number] [white/black]");
         }
-        int gameID = getGameID(gameNumber);
+        getGameID(gameNumber);
         if (Objects.equals(params[1], "white")) {
             teamColor = ChessGame.TeamColor.WHITE;
         } else if (Objects.equals(params[1], "black")) {
@@ -197,9 +205,8 @@ public class ChessClient implements MessageHandler {
         } else { throw new DataAccessException(400, "Expected: [game number] [white/black]"); }
         server.joinGame(new JoinRequest(teamColor, gameID), authToken);
         state = State.PLAYING;
-        ChessBoard board = new ChessBoard();
-        board.resetBoard();
-        return drawBoard(teamColor, board);
+        ws.connect(authToken, gameID, teamColor);
+        return SET_TEXT_COLOR_GREEN + "Successfully joined game as player";
     }
 
     private String observe(String ... params) throws DataAccessException {
@@ -213,16 +220,81 @@ public class ChessClient implements MessageHandler {
         } catch (NumberFormatException ex) {
             throw new DataAccessException(400, "Expected: [game number] [white/black]");
         }
-        int gameID = getGameID(gameNumber);
+        getGameID(gameNumber);
         state = State.OBSERVING;
-        ChessBoard board = new ChessBoard();
-        board.resetBoard();
-        return drawBoard(ChessGame.TeamColor.WHITE, board);
+        teamColor = ChessGame.TeamColor.WHITE;
+        ws.connect(authToken, gameID, null);
+        return SET_TEXT_COLOR_GREEN + "Successfully joined game as observer";
     };
 
     private String redraw() {
         if (state != State.PLAYING  && state != State.OBSERVING) {return help();}
         return drawBoard(teamColor, game.getBoard());
+    }
+
+    private int columnToNumber(char row) throws DataAccessException {
+        switch (row) {
+            case 'a' -> {return 1;}
+            case 'b' -> {return 2;}
+            case 'c' -> {return 3;}
+            case 'd' -> {return 4;}
+            case 'e' -> {return 5;}
+            case 'f' -> {return 6;}
+            case 'g' -> {return 7;}
+            case 'h' -> {return 8;}
+            default -> {throw new DataAccessException(400, "Expected: [move e.g. e2e4]");}
+        }
+    }
+
+    private ChessMove encodeMove(String moveString) throws DataAccessException {
+        char startColChar = moveString.charAt(0);
+        char startRowChar = moveString.charAt(1);
+        char endColChar = moveString.charAt(2);
+        char endRowChar = moveString.charAt(3);
+        int startCol = columnToNumber(startColChar);
+        int startRow = Character.getNumericValue(startRowChar);
+        int endCol = columnToNumber(endColChar);
+        int endRow = Character.getNumericValue(endRowChar);
+        if (startRow < 0 || startRow > 8 || endRow < 0 || endRow > 8) {
+            throw new DataAccessException(400, "Expected: [move e.g. e2e4]");
+        }
+        return new ChessMove(new ChessPosition(startRow, startCol), new ChessPosition(endRow, endCol), null);
+    }
+
+    private  String move(String ... params) throws DataAccessException {
+        if (state != State.PLAYING) { return help(); }
+        if (params.length < 1) {
+            throw new DataAccessException(400, "Expected: [move e.g. e2e4]");
+        }
+        if (teamColor != game.getTeamTurn()) { return SET_TEXT_COLOR_RED + "Error: It is not your turn"; }
+        ChessMove chessMove = encodeMove(params[0]);
+        if (Objects.equals(game.getBoard().getPiece(chessMove.getStartPosition()).getPieceType(), ChessPiece.PieceType.PAWN) &&
+                ((teamColor == ChessGame.TeamColor.WHITE && chessMove.getEndPosition().getRow() == 8) ||
+                (teamColor == ChessGame.TeamColor.BLACK && chessMove.getEndPosition().getRow() == 1))) {
+            Scanner scanner = new Scanner(System.in);
+            System.out.print("""
+                    Choose promotion piece by typing one of the following:
+                    queen
+                    rook
+                    knight
+                    bishop
+                    (input not matching one of these will default to queen)
+                    """);
+            System.out.print(SET_TEXT_COLOR_YELLOW + SET_TEXT_FAINT + SET_TEXT_ITALIC
+                    + "Chess >>> "
+                    + RESET_TEXT_COLOR + RESET_TEXT_ITALIC + RESET_TEXT_BOLD_FAINT);
+            String line = scanner.nextLine();
+            ChessPiece promotionPiece;
+            switch (line) {
+                case "rook" -> promotionPiece = new ChessPiece(teamColor, ChessPiece.PieceType.ROOK);
+                case "knight" -> promotionPiece = new ChessPiece(teamColor, ChessPiece.PieceType.KNIGHT);
+                case "bishop" -> promotionPiece = new ChessPiece(teamColor, ChessPiece.PieceType.BISHOP);
+                default -> promotionPiece = new ChessPiece(teamColor, ChessPiece.PieceType.QUEEN);
+            }
+            chessMove = new ChessMove(chessMove.getStartPosition(), chessMove.getEndPosition(), promotionPiece.getPieceType());
+        }
+        ws.makeMove(authToken, gameID, chessMove);
+        return "";
     }
 
     private String menu() {
@@ -249,6 +321,7 @@ public class ChessClient implements MessageHandler {
                     Choose one of the options below:
                     - help
                     - redraw
+                    - move [e.g. e2e4]
                     - quit
                     """;
         } else {
